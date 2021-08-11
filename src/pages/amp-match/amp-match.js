@@ -114,8 +114,15 @@ function gotError(theerror) {
 function gotData() {
   let incomingAngle = serial.readStringUntil('\n');  // read the incoming string 
   if (!incomingAngle) return;             // if the string is empty, do no more
-  // console.log(incomingAngle);
-  ang = float(incomingAngle) + 90;
+  incomingAngle = float(incomingAngle);
+
+  if (incomingAngle > 0) {
+    ang = incomingAngle - 90;
+  } else {
+    ang = incomingAngle + 270;
+  }
+
+  console.log(ang);
 }
 
 // We got raw from the serial port
@@ -160,7 +167,6 @@ function draw() {
 
     colorMode(HSB);
     if (ang != undefined) {
-        console.log(y);
         drawHeader(y);
         path.addPoint(x, y);
         path.display();
