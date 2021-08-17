@@ -4,6 +4,7 @@ let SPEED = 2;
 let SENSITIVITY = 3;
 let BRUSH_SIZE = 20;
 let SLOPE_BASED = true;
+let TOLERANCE = 10;
 
 function func(x) {
   return sin(x);
@@ -155,9 +156,9 @@ function draw() {
       }
 
       if (sum > 80) {
-        drawHappyEnding(sum);
+        drawHappyEnding((sum/offsets.length) * 100);
       } else {
-        drawSadEnding(sum);
+        drawSadEnding((sum/offsets.length) * 100);
       }
     }
     
@@ -226,7 +227,7 @@ class Path {
     this.userPts[x] = y;
 
     let distance = calcDistance([x, funcPoints[x]], [x, y]);
-    if (distance < 50) {
+    if (distance < TOLERANCE) {
       offsets.push(1);
     } else {
       offsets.push(0);
