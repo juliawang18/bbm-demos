@@ -5,16 +5,11 @@ let SENSITIVITY = 3;
 let BRUSH_SIZE = 20;
 let GOAL_AMP = 200;
 
-function func(x) {
-  return sin(x);
-}
-
 // DO NOT TOUCH BELOW //
 let serial;
 let latestData = "waiting for data";  // you'll use this to write incoming data to the canvas
 let funcPoints = [];
 let startDraw = false;
-let endGame = false;
 let drawGrid = false;
 let path;
 let ang;            // Angle
@@ -121,8 +116,6 @@ function gotData() {
   } else {
     ang = incomingAngle + 270;
   }
-
-  console.log(ang);
 }
 
 // We got raw from the serial port
@@ -158,11 +151,8 @@ function draw() {
     }
 
     if (x > 1000) {
-      endGame = true;
-    }
-
-    if (endGame) {
-        showEndScreen();
+      frameCount = 0;
+      noLoop();
     }
 
     colorMode(HSB);
@@ -177,10 +167,6 @@ function draw() {
     x = x + SPEED;
   }
   
-}
-
-function showEndScreen() {
-
 }
 
 function drawingGrid() {

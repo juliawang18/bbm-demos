@@ -1,6 +1,6 @@
 // CONSTANTS TO CHANGE //
 let portName = "/dev/tty.usbmodem142101"; 
-let SPEED = 2;
+let SPEED = 20;
 let SENSITIVITY = 3;
 let BRUSH_SIZE = 20;
 let SLOPE_BASED = true;
@@ -22,7 +22,6 @@ let ang;            // Angle
 let rad;            // Angle in radians
 let x;              // XPos of drawing dot
 let y;              // YPos of drawing dot
-// let niceImage, mehImage;
 
 function setup() {
   createCanvas(1000, 600);
@@ -31,9 +30,6 @@ function setup() {
   colorMode(HSB, 360, 100, 100);
   path = new Path();
   time = second();
-
-  // mehImage = loadImage("assets/meh.png");
-  // niceImage = loadImage("assets/nice.png");
 
   // Instantiate our SerialPort object
   serial = new p5.SerialPort();
@@ -100,6 +96,8 @@ function gotData() {
 }
 
 function draw() {
+  // console.log(x, y);
+  // console.log(ang);
   textSize(50);
   textAlign(CENTER);
   noStroke();
@@ -138,6 +136,7 @@ function draw() {
     }
 
     if (ang != undefined) {
+      console.log("STILL DRAWING");
       path.addPoint(x, y);
       path.display();
     }
@@ -153,12 +152,6 @@ function draw() {
           sum += offsets[i];
         }
       }
-
-      if (sum > 80) {
-        drawHappyEnding(sum);
-      } else {
-        drawSadEnding(sum);
-      }
     }
     
     if (SLOPE_BASED) {
@@ -171,30 +164,6 @@ function draw() {
     }
   }
   
-}
-
-function drawHappyEnding(sum) {
-  background("#07A87C");
-  path.display();
-
-  noStroke();
-  fill('white');
-  textSize(20);
-  textAlign(CENTER); 
-  text("WOOO", width/2, height/2 - 50);
-  text(sum + "% correct", width/2, height/2);
-}
-
-function drawSadEnding(sum) {
-  background("#DA7045");
-  path.display();
-
-  noStroke();
-  fill('white');
-  textSize(20);
-  textAlign(CENTER); 
-  text("TRY AGAIN", width/2, height/2 - 50);
-  text(sum + "% correct", width/2, height/2);
 }
 
 function calcDistance(correctPoint, userPoint) {
@@ -226,11 +195,7 @@ class Path {
     this.userPts[x] = y;
 
     let distance = calcDistance([x, funcPoints[x]], [x, y]);
-    if (distance > 50) {
-      offsets.push(1);
-    } else {
-      offsets.push(0);
-    }
+    offsets.push(distance);
 
     const nextPt = new p5.Vector(x, y);
     let d = p5.Vector.dist(nextPt, this.lastPt);
