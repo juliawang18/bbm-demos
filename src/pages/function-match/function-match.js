@@ -226,7 +226,7 @@ class Path {
     this.userPts[x] = y;
 
     let distance = calcDistance([x, funcPoints[x]], [x, y]);
-    if (distance > 50) {
+    if (distance < 50) {
       offsets.push(1);
     } else {
       offsets.push(0);
