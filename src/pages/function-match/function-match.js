@@ -4,7 +4,7 @@ let SPEED = 2;
 let SENSITIVITY = 3;
 let BRUSH_SIZE = 20;
 let SLOPE_BASED = true;
-let TOLERANCE = 10;
+let TOLERANCE = 40;
 
 function func(x) {
   return sin(x);
@@ -23,7 +23,6 @@ let ang;            // Angle
 let rad;            // Angle in radians
 let x;              // XPos of drawing dot
 let y;              // YPos of drawing dot
-// let niceImage, mehImage;
 
 function setup() {
   createCanvas(1000, 600);
@@ -155,7 +154,8 @@ function draw() {
         }
       }
 
-      if (sum > 80) {
+      console.log(sum , offsets.length);
+      if ((sum/offsets.length) * 100 > 80) {
         drawHappyEnding((sum/offsets.length) * 100);
       } else {
         drawSadEnding((sum/offsets.length) * 100);
@@ -176,6 +176,7 @@ function draw() {
 
 function drawHappyEnding(sum) {
   background("#07A87C");
+  drawGrid();
   path.display();
 
   noStroke();
@@ -188,6 +189,7 @@ function drawHappyEnding(sum) {
 
 function drawSadEnding(sum) {
   background("#DA7045");
+  drawGrid();
   path.display();
 
   noStroke();
@@ -198,6 +200,18 @@ function drawSadEnding(sum) {
   text(sum + "% correct", width/2, height/2);
 }
 
+function drawGrid() {
+  for (let i = 0; i < width; i+=SPEED) {
+    let xPoint = i;
+    let yPoint= func(i/100) * 100 + (height/2);
+
+    colorMode(RGB);
+    stroke(255, 255, 255, 50);
+    strokeWeight(10);
+    point(xPoint, yPoint);
+  }
+}
+ 
 function calcDistance(correctPoint, userPoint) {
   return dist(userPoint[0], userPoint[1], correctPoint[0], correctPoint[1]);
 }
@@ -244,10 +258,10 @@ class Path {
       d -= this.spacing;
       let distance = calcDistance([x, funcPoints[x]], [x, y]);
       
-      if (distance > 150) {
-        this.hue = 255;
+      if (distance > 110) {
+        this.hue = 0;
       } else {
-        this.hue = (distance * 1.5) % 255; // for each new point, update the hue
+        this.hue = 110 - distance; // for each new point, update the hue
       }
       this.hues.push(this.hue);
     }
@@ -257,8 +271,8 @@ class Path {
     noStroke()
     for (let i = 0; i < this.pts.length; i++) {
       const p = this.pts[i];
-      colorMode(RGB);
-      fill(this.hues[i], 136, 86);
+      colorMode(HSB);
+      fill(this.hues[i], 100, 100);
       ellipse(p.x, p.y, this.size, this.size);
     }
   }

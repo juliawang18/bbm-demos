@@ -15,7 +15,6 @@ let startDraw = false;
 let drawGrid = false;
 let isPositive;
 let FREQ = 0;
-let time;
 let path;
 let ang;            // Angle
 let rad;            // Angle in radians
@@ -28,7 +27,6 @@ function setup() {
 
     colorMode(HSB, 360, 100, 100);
     path = new Path();
-    time = second();
 
     // Instantiate our SerialPort object
     serial = new p5.SerialPort();
@@ -41,6 +39,21 @@ function setup() {
     serial.on('error', gotError);
     serial.on('open', gotOpen);
     serial.on('close', gotClose);
+
+    var button = createButton("restart");
+    button.mousePressed(reset);
+    button.style('background-color', "#0055FF");
+    button.style('border-radius', "50px");
+    button.style('border', "none");
+    button.style('color', "white");
+    button.style('width', "100px");
+    button.style('margin', "auto");
+    button.style('margin-top', "30px");
+    button.style('padding', "20px");
+    button.style('cursor', "pointer");
+    button.style('text-align', "center");
+    button.style('font-size', "16px");
+    button.style('font-family', "'Comfortaa', cursive");
 
     // initialize point data
     y = height / 2;
@@ -101,14 +114,11 @@ function draw() {
     fill('white');
 
     if (frameCount == 50) {
-        background("#272433");
-        text("3", width / 2, height / 2);
+        drawingCount("3");
     } else if (frameCount == 100) {
-        background("#272433");
-        text("2", width / 2, height / 2);
+        drawingCount("2");
     } else if (frameCount == 150) {
-        background("#272433");
-        text("1", width / 2, height / 2);
+        drawingCount("1");
     } else if (frameCount > 200) {
         startDraw = true;
         drawGrid = true;
@@ -122,7 +132,6 @@ function draw() {
         }
 
         if (ang != undefined) {
-            console.log("STILL DRAWING");
             drawHeader(y);
             colorMode(HSB);
             path.addPoint(x, y);
@@ -144,7 +153,7 @@ function draw() {
         }
 
         if (x > 1000) {
-            frameCount = 0;
+            showResults(FREQ/2);
             noLoop();
         }
 
@@ -160,32 +169,88 @@ function draw() {
 
 }
 
+function reset() {
+    background("#272433");
+
+    colorMode(HSB, 360, 100, 100);
+    path = new Path();
+
+    // initialize point data
+    y = height / 2;
+    x = 0;
+
+    COUNT = 0;
+    frameCount = 0;
+    funcPoints = [];
+    startDraw = false;
+    drawGrid = false;
+    loop();
+}
+
+function showResults(count) {
+    clear();
+    background("#272433");
+    drawingGrid();
+    background('rgba(0,0,0, 0.7)');
+
+    colorMode(HSB);
+    path.display();
+
+    fill("white");
+    textAlign(CENTER);
+    textSize(100);
+    text(count, width / 2, 100);
+    textSize(20);
+    text("CYCLES PER SCREEN!", width / 2, 140);
+}
+
+function drawingCount(num) {
+    clear();
+    background("#272433");
+    drawingGrid();
+    background('rgba(0,0,0, 0.7)');
+    textAlign(CENTER);
+    textSize(100);
+    text(num, width / 2, height / 2);
+}
+
 function drawingGrid() {
     colorMode(RGB);
     stroke(255, 50);
     strokeWeight(2);
-    for (let i = 80; i < width; i += 80) {
+    for (let i = 100; i < width; i += 100) {
         line(i, 0, i, height);
     }
-    for (let j = 60; j < height; j += 80) {
+    for (let j = 100; j < height; j += 100) {
         line(0, j, width, j);
     }
 
     stroke(255);
     strokeWeight(2);
     line(0, 300, width, 300);
+
+    noStroke();
+    fill('white');
+    textSize(20);
+    textAlign(LEFT);
+    for (let i = 100; i < width; i += 200) {
+        text(i / 100 - 5, i, height / 2 + 20);
+    }
+    for (let j = 100; j < height; j += 400) {
+        text(-j / 100 + 3, width / 2, j);
+    }
 }
 
 function drawHeader(y) {
     fill("#272433");
     noStroke();
     rect(0, 0, 1000, 60);
-    
+
     noStroke();
     fill('white');
     textSize(20);
-    textAlign(CENTER); 
-    text("CURR FREQ: " + FREQ/2 + "cycles/sec", 350, 37);
+    textAlign(CENTER);
+    text("CURR FREQ: " + FREQ / 2 + "cycles/sec", 350, 37);
     text("GOAL FREQ: " + GOAL_FREQ + "cycles/sec", 650, 37);
 }
 

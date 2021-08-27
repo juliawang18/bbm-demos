@@ -1,9 +1,10 @@
 // CONSTANTS TO CHANGE //
 let portName = "/dev/tty.usbmodem142101"; 
-let SPEED = 20;
+let SPEED = 2;
 let SENSITIVITY = 3;
 let BRUSH_SIZE = 20;
-let SLOPE_BASED = true;
+let SLOPE_BASED = false;
+let TOLERANCE = 40;
 
 function func(x) {
   return sin(x);
@@ -16,7 +17,6 @@ let funcPoints = {};
 let offsets = [];
 let startDraw = false;
 let drawFunction = false;
-let time;
 let path;
 let ang;            // Angle
 let rad;            // Angle in radians
@@ -29,7 +29,6 @@ function setup() {
 
   colorMode(HSB, 360, 100, 100);
   path = new Path();
-  time = second();
 
   // Instantiate our SerialPort object
   serial = new p5.SerialPort();
@@ -46,6 +45,7 @@ function setup() {
   // initialize point data
   y = height/2;
   x = 0;
+
 }
 
 // We are connected and ready to go
@@ -83,21 +83,16 @@ function gotData() {
   let incomingAngle = serial.readStringUntil('\n');  // read the incoming string 
   if (!incomingAngle) return;             // if the string is empty, do no more
   incomingAngle = float(incomingAngle);
-  
-  if (SLOPE_BASED) {
-    ang = float(incomingAngle) + 90;
-  } else {
+
     if (incomingAngle > 0) {
-      ang = incomingAngle - 90;
+      ang = 270 - incomingAngle;
     } else {
-      ang = incomingAngle + 270;
+      ang = -90 - incomingAngle;
     }
-  }
+  console.log(ang);
 }
 
 function draw() {
-  // console.log(x, y);
-  // console.log(ang);
   textSize(50);
   textAlign(CENTER);
   noStroke();
@@ -136,7 +131,6 @@ function draw() {
     }
 
     if (ang != undefined) {
-      console.log("STILL DRAWING");
       path.addPoint(x, y);
       path.display();
     }
@@ -152,6 +146,13 @@ function draw() {
           sum += offsets[i];
         }
       }
+
+      console.log(sum , offsets.length);
+      if ((sum/offsets.length) * 100 > 80) {
+        drawHappyEnding((sum/offsets.length) * 100);
+      } else {
+        drawSadEnding((sum/offsets.length) * 100);
+      }
     }
     
     if (SLOPE_BASED) {
@@ -166,6 +167,44 @@ function draw() {
   
 }
 
+function drawHappyEnding(sum) {
+  background("#07A87C");
+  drawGrid();
+  path.display();
+
+  noStroke();
+  fill('white');
+  textSize(20);
+  textAlign(CENTER); 
+  text("WOOO", width/2, height/2 - 50);
+  text(sum + "% correct", width/2, height/2);
+}
+
+function drawSadEnding(sum) {
+  background("#DA7045");
+  drawGrid();
+  path.display();
+
+  noStroke();
+  fill('white');
+  textSize(20);
+  textAlign(CENTER); 
+  text("TRY AGAIN", width/2, height/2 - 50);
+  text(sum + "% correct", width/2, height/2);
+}
+
+function drawGrid() {
+  for (let i = 0; i < width; i+=SPEED) {
+    let xPoint = i;
+    let yPoint= func(i/100) * 100 + (height/2);
+
+    colorMode(RGB);
+    stroke(255, 255, 255, 50);
+    strokeWeight(10);
+    point(xPoint, yPoint);
+  }
+}
+ 
 function calcDistance(correctPoint, userPoint) {
   return dist(userPoint[0], userPoint[1], correctPoint[0], correctPoint[1]);
 }
@@ -195,7 +234,11 @@ class Path {
     this.userPts[x] = y;
 
     let distance = calcDistance([x, funcPoints[x]], [x, y]);
-    offsets.push(distance);
+    if (distance < TOLERANCE) {
+      offsets.push(1);
+    } else {
+      offsets.push(0);
+    }
 
     const nextPt = new p5.Vector(x, y);
     let d = p5.Vector.dist(nextPt, this.lastPt);
@@ -208,10 +251,10 @@ class Path {
       d -= this.spacing;
       let distance = calcDistance([x, funcPoints[x]], [x, y]);
       
-      if (distance > 150) {
-        this.hue = 255;
+      if (distance > 110) {
+        this.hue = 0;
       } else {
-        this.hue = (distance * 1.5) % 255; // for each new point, update the hue
+        this.hue = 110 - distance; // for each new point, update the hue
       }
       this.hues.push(this.hue);
     }
@@ -221,8 +264,8 @@ class Path {
     noStroke()
     for (let i = 0; i < this.pts.length; i++) {
       const p = this.pts[i];
-      colorMode(RGB);
-      fill(this.hues[i], 136, 86);
+      colorMode(HSB);
+      fill(this.hues[i], 100, 100);
       ellipse(p.x, p.y, this.size, this.size);
     }
   }

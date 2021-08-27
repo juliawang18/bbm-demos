@@ -1,9 +1,9 @@
 // CONSTANTS TO CHANGE //
-let portName = "/dev/tty.usbmodem142101"; 
-let SPEED = 2;
+let portName = "/dev/tty.usbmodem142101";
+let SPEED = 5;
 let SENSITIVITY = 3;
 let BRUSH_SIZE = 20;
-let GOAL_AMP = 200;
+let GOAL_AMP_TEXT = 2;
 
 // DO NOT TOUCH BELOW //
 let serial;
@@ -11,12 +11,14 @@ let latestData = "waiting for data";  // you'll use this to write incoming data 
 let funcPoints = [];
 let startDraw = false;
 let drawGrid = false;
+let reachedAmp;
+let COUNT = 0;
 let path;
 let ang;            // Angle
 let rad;            // Angle in radians
 let x;              // XPos of drawing dot
 let y;              // YPos of drawing dot
-let amplitudes = [];
+GOAL_AMP = GOAL_AMP_TEXT * 100;
 
 function setup() {
   createCanvas(1000, 600);
@@ -25,53 +27,35 @@ function setup() {
   colorMode(HSB, 360, 100, 100);
   path = new Path();
 
-  // console.log(funcPoints.length);
-
   // Instantiate our SerialPort object
   serial = new p5.SerialPort();
-
-  // Get a list the ports available
-  // You should have a callback defined to see the results
   serial.list();
-
-  // Assuming our Arduino is connected, let's open the connection to it
-  // Change this to the name of your arduino's serial port
-  let options = { baudRate: 115200}; // change the data rate to whatever you wish
+  let options = { baudRate: 115200 }; // change the data rate to whatever you wish
   serial.open(portName, options);
-
-  // Here are the callbacks that you can register
-  // When we connect to the underlying server
   serial.on('connected', serverConnected);
-
-  // When we get a list of serial ports that are available
   serial.on('list', gotList);
-  // OR
-  //serial.onList(gotList);
-
-  // When we some data from the serial port
   serial.on('data', gotData);
-  // OR
-  //serial.onData(gotData);
-
-  // When or if we get an error
   serial.on('error', gotError);
-  // OR
-  //serial.onError(gotError);
-
-  // When our serial port is opened and ready for read/write
   serial.on('open', gotOpen);
-  // OR
-  //serial.onOpen(gotOpen);
-
   serial.on('close', gotClose);
 
-  // Callback to get the raw data, as it comes in for handling yourself
-  // serial.on('rawdata', gotRawData);
-  // OR
-  //serial.onRawData(gotRawData);
+  var button = createButton("restart");
+  button.mousePressed(reset);
+  button.style('background-color', "#0055FF");
+  button.style('border-radius', "50px");
+  button.style('border', "none");
+  button.style('color', "white");
+  button.style('width', "100px");
+  button.style('margin', "auto");
+  button.style('margin-top', "30px");
+  button.style('padding', "20px");
+  button.style('cursor', "pointer");
+  button.style('text-align', "center");
+  button.style('font-size', "16px");
+  button.style('font-family', "'Comfortaa', cursive");
 
   // initialize point data
-  y = height/2;
+  y = height / 2;
   x = 0;
 }
 
@@ -95,9 +79,9 @@ function gotOpen() {
   print("Serial Port is Open");
 }
 
-function gotClose(){
-    print("Serial Port is Closed");
-    latestData = "Serial Port is Closed";
+function gotClose() {
+  print("Serial Port is Closed");
+  latestData = "Serial Port is Closed";
 }
 
 // Ut oh, here is an error, let's log it
@@ -118,26 +102,14 @@ function gotData() {
   }
 }
 
-// We got raw from the serial port
-function gotRawData(thedata) {
-  print("gotRawData " + thedata);
-}
-
 function draw() {
-  textSize(50);
-  textAlign(CENTER);
-  noStroke();
-  fill('white');
-  
+
   if (frameCount == 50) {
-    background("#272433");
-    text("3", width / 2, height / 2);
+    drawingCount("3");
   } else if (frameCount == 100) {
-    background("#272433");
-    text("2", width / 2, height / 2);
+    drawingCount("2");
   } else if (frameCount == 150) {
-    background("#272433");
-    text("1", width / 2, height / 2);
+    drawingCount("1");
   } else if (frameCount > 200) {
     startDraw = true;
     drawGrid = true;
@@ -150,65 +122,141 @@ function draw() {
       drawGrid = false;
     }
 
-    if (x > 1000) {
-      frameCount = 0;
-      noLoop();
+    if (y > height / 2 + GOAL_AMP) {
+      if (!reachedAmp) {
+        COUNT += 1;
+        reachedAmp = true;
+      }
+    }
+
+    if (y < height / 2 + GOAL_AMP && y > height / 2 - GOAL_AMP) {
+      reachedAmp = false;
+    }
+
+    if (y < height / 2 - GOAL_AMP) {
+      if (!reachedAmp) {
+        COUNT += 1;
+        reachedAmp = true;
+      }
     }
 
     colorMode(HSB);
     if (ang != undefined) {
-        drawHeader(y);
-        path.addPoint(x, y);
-        path.display();
+      drawHeader(y);
+      path.addPoint(x, y);
+      path.display();
     }
-    
+
     // increment point x and y
     y = - (ang - 90) * SENSITIVITY + 300; // ang mapping
     x = x + SPEED;
+
+    if (x > 1000) {
+      showResults(COUNT);
+      noLoop();
+    }
   }
-  
+
+}
+
+function reset() {
+  background("#272433");
+
+  colorMode(HSB, 360, 100, 100);
+  path = new Path();
+
+  // initialize point data
+  y = height / 2;
+  x = 0;
+
+  COUNT = 0;
+  frameCount = 0;
+  funcPoints = [];
+  startDraw = false;
+  drawGrid = false;
+  loop();
+}
+
+function showResults(count) {
+  clear();
+  background("#272433");
+  drawingGrid();
+  background('rgba(0,0,0, 0.7)');
+
+  colorMode(HSB);
+  path.display();
+
+  fill("white");
+  textAlign(CENTER);
+  textSize(20);
+  text("YOU'VE REACH THE AMPLITUDE", width / 2, height / 2 - 100);
+  textSize(100);
+  text(count, width / 2, height / 2);
+  textSize(20);
+  text("TIMES", width / 2, height / 2 + 40);
+}
+
+function drawingCount(num) {
+  clear();
+  background("#272433");
+  drawingGrid();
+  background('rgba(0,0,0, 0.7)');
+  textAlign(CENTER);
+  textSize(100);
+  text(num, width / 2, height / 2);
 }
 
 function drawingGrid() {
-    colorMode(RGB);
-    stroke(255, 50);
-    strokeWeight(2);
-    for(let i = 80; i < width; i+=80) {
-      line(i, 0, i, height);
-    }
-    for(let j = 60; j < height; j+=80) {
-      line(0, j, width, j);
-    }
-    
-    stroke(255);
-    strokeWeight(2);
-    line(0, 300, width, 300);
+  colorMode(HSB);
+  var yBelow = 300 + GOAL_AMP;
+  var yAbove = 300 - GOAL_AMP;
 
-    colorMode(HSB);
-    var yBelow = 300 + GOAL_AMP;
-    var yAbove = 300 - GOAL_AMP;
+  stroke((yBelow - 180) % 360, 100, 100);
+  strokeWeight(2);
+  line(0, yBelow, width, yBelow);
 
-    stroke((yBelow - 180) % 360, 100, 100);
-    strokeWeight(2);
-    line(0, yBelow, width, yBelow);
+  stroke((yAbove - 180) % 360, 100, 100);
+  strokeWeight(2);
+  line(0, yAbove, width, yAbove);
 
-    stroke((yAbove - 180) % 360, 100, 100);
-    strokeWeight(2);
-    line(0, yAbove, width, yAbove);
+  colorMode(RGB);
+  stroke(255, 50);
+  strokeWeight(2);
+  for (let i = 100; i < width; i += 100) {
+    line(i, 0, i, height);
   }
-  
+  for (let j = 100; j < height; j += 100) {
+    line(0, j, width, j);
+  }
+
+  stroke(255);
+  strokeWeight(2);
+  line(0, 300, width, 300);
+
+  noStroke();
+  fill('white');
+  textSize(20);
+  textAlign(LEFT);
+  for (let i = 100; i < width; i += 200) {
+    text(i / 100 - 5, i, height / 2 + 20);
+  }
+  for (let j = 100; j < height; j += 400) {
+    text(-j / 100 + 3, width / 2, j);
+  }
+
+}
 
 function drawHeader(y) {
-    fill("#272433");
-    noStroke();
-    rect(0, 0, 1000, 60);
-    
-    noStroke();
-    fill('white');
-    textSize(20);
-    textAlign(CENTER); 
-    text("Y-POS: " + Math.round(((300-y) * 100) / 100), 400, 37);
-    text("GOAL AMP: " + GOAL_AMP, 550, 37);
+  fill("#272433");
+  noStroke();
+  rect(0, 0, 1000, 60);
+
+  noStroke();
+  fill('white');
+  textSize(20);
+  textAlign(CENTER);
+  text("Y-POS: " + Math.round(((300 - y) * 100) / 100), 400, 37);
+  text("GOAL AMP: " + GOAL_AMP_TEXT, 550, 37);
 }
 
 class Path {
