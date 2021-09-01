@@ -1,6 +1,6 @@
 // CONSTANTS TO CHANGE //
-let portName = "/dev/tty.usbmodem142101"; 
-let SPEED = 2;
+let portName = "/dev/tty.usbmodem142101";
+let SPEED = 20;
 let SENSITIVITY = 3;
 let BRUSH_SIZE = 20;
 let SLOPE_BASED = true;
@@ -17,28 +17,27 @@ let funcPoints = {};
 let offsets = [];
 let startDraw = false;
 let drawFunction = false;
-let time;
 let path;
 let ang;            // Angle
 let rad;            // Angle in radians
 let x;              // XPos of drawing dot
 let y;              // YPos of drawing dot
+let goodImg, badImg;
 
 function setup() {
-  createCanvas(1000, 600);
-  background("#272433");
+  createCanvas(window.innerWidth, window.innerHeight);
+  background("#424D75");
 
   colorMode(HSB, 360, 100, 100);
   path = new Path();
-  time = second();
 
-  // mehImage = loadImage("assets/meh.png");
-  // niceImage = loadImage("assets/nice.png");
+  goodImg = loadImage("assets/good1.png");
+  badImg = loadImage("assets/notsogood3.png");
 
   // Instantiate our SerialPort object
   serial = new p5.SerialPort();
   serial.list(); // list ports
-  let options = { baudRate: 115200}; 
+  let options = { baudRate: 115200 };
   serial.open(portName, options);
   serial.on('connected', serverConnected);
   serial.on('list', gotList);
@@ -47,8 +46,25 @@ function setup() {
   serial.on('open', gotOpen);
   serial.on('close', gotClose);
 
+  var button = createButton("restart");
+  button.mousePressed(reset);
+  button.style('position', "absolute");
+  button.style('right', "10px");
+  button.style('top', "10px");
+  button.style('background-color', "#0055FF");
+  button.style('border-radius', "50px");
+  button.style('border', "none");
+  button.style('color', "white");
+  button.style('width', "100px");
+  button.style('margin', "auto");
+  button.style('padding', "20px");
+  button.style('cursor', "pointer");
+  button.style('text-align', "center");
+  button.style('font-size', "16px");
+  button.style('font-family', "'Quicksand', san-serif");
+
   // initialize point data
-  y = height/2;
+  y = height / 2;
   x = 0;
 }
 
@@ -72,9 +88,9 @@ function gotOpen() {
   print("Serial Port is Open");
 }
 
-function gotClose(){
-    print("Serial Port is Closed");
-    latestData = "Serial Port is Closed";
+function gotClose() {
+  print("Serial Port is Closed");
+  latestData = "Serial Port is Closed";
 }
 
 // Ut oh, here is an error, let's log it
@@ -87,7 +103,7 @@ function gotData() {
   let incomingAngle = serial.readStringUntil('\n');  // read the incoming string 
   if (!incomingAngle) return;             // if the string is empty, do no more
   incomingAngle = float(incomingAngle);
-  
+
   if (SLOPE_BASED) {
     ang = float(incomingAngle) + 90;
   } else {
@@ -104,33 +120,30 @@ function draw() {
   textAlign(CENTER);
   noStroke();
   fill('white');
-  
+
   if (frameCount == 50) {
-    background("#272433");
-    text("3", width / 2, height / 2);
+      drawingCount("3");
   } else if (frameCount == 100) {
-    background("#272433");
-    text("2", width / 2, height / 2);
+      drawingCount("2");
   } else if (frameCount == 150) {
-    background("#272433");
-    text("1", width / 2, height / 2);
+      drawingCount("1");
   } else if (frameCount > 200) {
-    startDraw = true;
-    drawFunction = true;
+      startDraw = true;
+      drawFunction = true;
   }
 
   if (startDraw) {
     if (drawFunction == true) {
-      background("#272433");
-      for (let i = 0; i < width; i+=SPEED) {
+      background("#424D75");
+      for (let i = 0; i < width; i += SPEED) {
         let xPoint = i;
-        let yPoint= func(i/100) * 100 + (height/2);
-    
+        let yPoint = func(i / 100) * 100 + (height / 2);
+
         colorMode(RGB);
         stroke(255, 255, 255, 50);
         strokeWeight(10);
         point(xPoint, yPoint);
-  
+
         funcPoints[xPoint] = yPoint;
       }
       colorMode(HSB);
@@ -142,76 +155,111 @@ function draw() {
       path.display();
     }
 
-    if (x > 1000) {
+    if (x > window.innerWidth) {
       clear();
       frameCount = 0;
       noLoop();
 
       let sum = 0;
-      for (let i = 0; i < offsets.length; i+=1) {
+      for (let i = 0; i < offsets.length; i += 1) {
         if (offsets[i] > 0) {
           sum += offsets[i];
         }
       }
 
-      console.log(sum , offsets.length);
-      if ((sum/offsets.length) * 100 > 80) {
-        drawHappyEnding((sum/offsets.length) * 100);
+      if ((sum / offsets.length) * 100 > 80) {
+        drawHappyEnding((sum / offsets.length) * 100);
       } else {
-        drawSadEnding((sum/offsets.length) * 100);
+        drawSadEnding((sum / offsets.length) * 100);
       }
     }
-    
+
     if (SLOPE_BASED) {
-      rad = (ang/180) * PI; // slope mapping
-      y = y + SPEED * cos(rad)/sin(rad) * SENSITIVITY;
+      rad = (ang / 180) * PI; // slope mapping
+      y = y + SPEED * cos(rad) / sin(rad) * SENSITIVITY;
       x = x + SPEED;
     } else {
       y = - (ang - 90) * SENSITIVITY + 300; // ang mapping
       x = x + SPEED;
     }
   }
-  
+
+}
+
+function drawingFunction() {
+  colorMode(RGB);
+  for (let i = 0; i < width; i += SPEED) {
+    let xPoint = i;
+    let yPoint = func(i / 100) * 100 + (height / 2);
+
+    stroke(255, 255, 255, 50);
+    strokeWeight(10);
+    point(xPoint, yPoint);
+    print(xPoint, yPoint);
+
+    funcPoints[xPoint] = yPoint;
+  }
+  noStroke();
+}
+
+function drawingCount(num) {
+  clear();
+  background("#424D75");
+  drawingFunction();
+  background('rgba(0,0,0, 0.3)');
+  textAlign(CENTER);
+  textSize(100);
+  text(num, width / 2, height / 2);
+}
+
+function reset() {
+  background("#424D75");
+
+  path = new Path();
+
+  // initialize point data
+  y = height / 2;
+  x = 0;
+
+  COUNT = 0;
+  frameCount = 0;
+  funcPoints = {};
+  offsets = [];
+  startDraw = false;
+  drawFunction = false;
+  loop();
 }
 
 function drawHappyEnding(sum) {
   background("#07A87C");
-  drawGrid();
   path.display();
 
   noStroke();
   fill('white');
   textSize(20);
-  textAlign(CENTER); 
-  text("WOOO", width/2, height/2 - 50);
-  text(sum + "% correct", width/2, height/2);
+  textAlign(CENTER);
+  text("WOOO", width / 2, height / 2 - 50);
+  text(round(sum) + "% correct", width / 2, height / 2);
+
+  imageMode(CENTER);
+  image(goodImg, window.innerWidth / 2, window.innerHeight - (badImg.height / 4), window.innerWidth * 0.8, window.innerHeight * 0.3);
 }
 
 function drawSadEnding(sum) {
   background("#DA7045");
-  drawGrid();
   path.display();
 
   noStroke();
   fill('white');
   textSize(20);
-  textAlign(CENTER); 
-  text("TRY AGAIN", width/2, height/2 - 50);
-  text(sum + "% correct", width/2, height/2);
+  textAlign(CENTER);
+  text("TRY AGAIN", width / 2, height / 2 - 50);
+  text(round(sum) + "% correct", width / 2, height / 2);
+
+  imageMode(CENTER);
+  image(badImg, window.innerWidth / 2, window.innerHeight - (badImg.height / 4), window.innerWidth * 0.8, window.innerHeight * 0.3);
 }
 
-function drawGrid() {
-  for (let i = 0; i < width; i+=SPEED) {
-    let xPoint = i;
-    let yPoint= func(i/100) * 100 + (height/2);
-
-    colorMode(RGB);
-    stroke(255, 255, 255, 50);
-    strokeWeight(10);
-    point(xPoint, yPoint);
-  }
-}
- 
 function calcDistance(correctPoint, userPoint) {
   return dist(userPoint[0], userPoint[1], correctPoint[0], correctPoint[1]);
 }
@@ -257,7 +305,7 @@ class Path {
       this.pts.push(p5.Vector.add(this.lastPt, diff));
       d -= this.spacing;
       let distance = calcDistance([x, funcPoints[x]], [x, y]);
-      
+
       if (distance > 110) {
         this.hue = 0;
       } else {

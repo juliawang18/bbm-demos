@@ -18,14 +18,20 @@ let ang;            // Angle
 let rad;            // Angle in radians
 let x;              // XPos of drawing dot
 let y;              // YPos of drawing dot
-GOAL_AMP = GOAL_AMP_TEXT * 100;
+let interval;
+let midVal;
+let GOAL_AMP
 
 function setup() {
-  createCanvas(1000, 600);
-  background("#272433");
+  createCanvas(window.innerWidth, window.innerHeight);
+  background("#F4705F");
 
   colorMode(HSB, 360, 100, 100);
   path = new Path();
+
+  interval = window.innerWidth/12;
+  midVal = floor(floor(window.innerHeight / interval) / 2) * interval + 80;
+  GOAL_AMP = GOAL_AMP_TEXT * interval;
 
   // Instantiate our SerialPort object
   serial = new p5.SerialPort();
@@ -41,21 +47,23 @@ function setup() {
 
   var button = createButton("restart");
   button.mousePressed(reset);
+  button.style('position', "absolute");
+  button.style('right', "10px");
+  button.style('top', "10px");
   button.style('background-color', "#0055FF");
   button.style('border-radius', "50px");
   button.style('border', "none");
   button.style('color', "white");
   button.style('width', "100px");
   button.style('margin', "auto");
-  button.style('margin-top', "30px");
   button.style('padding', "20px");
   button.style('cursor', "pointer");
   button.style('text-align', "center");
   button.style('font-size', "16px");
-  button.style('font-family', "'Comfortaa', cursive");
+  button.style('font-family', "'Quicksand', san-serif");
 
   // initialize point data
-  y = height / 2;
+  y = midVal;
   x = 0;
 }
 
@@ -117,7 +125,7 @@ function draw() {
 
   if (startDraw) {
     if (drawGrid == true) {
-      background("#272433");
+      background("#F4705F");
       drawingGrid();
       drawGrid = false;
     }
@@ -142,16 +150,15 @@ function draw() {
 
     colorMode(HSB);
     if (ang != undefined) {
-      drawHeader(y);
       path.addPoint(x, y);
       path.display();
     }
 
     // increment point x and y
-    y = - (ang - 90) * SENSITIVITY + 300; // ang mapping
+    y = - (ang - 90) * SENSITIVITY + midVal; // ang mapping
     x = x + SPEED;
 
-    if (x > 1000) {
+    if (x > window.innerWidth) {
       showResults(COUNT);
       noLoop();
     }
@@ -160,13 +167,13 @@ function draw() {
 }
 
 function reset() {
-  background("#272433");
+  background("#F4705F");
 
   colorMode(HSB, 360, 100, 100);
   path = new Path();
 
   // initialize point data
-  y = height / 2;
+  y = midVal;
   x = 0;
 
   COUNT = 0;
@@ -178,14 +185,6 @@ function reset() {
 }
 
 function showResults(count) {
-  clear();
-  background("#272433");
-  drawingGrid();
-  background('rgba(0,0,0, 0.7)');
-
-  colorMode(HSB);
-  path.display();
-
   fill("white");
   textAlign(CENTER);
   textSize(20);
@@ -198,9 +197,9 @@ function showResults(count) {
 
 function drawingCount(num) {
   clear();
-  background("#272433");
+  background("#F4705F");
   drawingGrid();
-  background('rgba(0,0,0, 0.7)');
+  background('rgba(0,0,0, 0.3)');
   textAlign(CENTER);
   textSize(100);
   text(num, width / 2, height / 2);
@@ -208,56 +207,62 @@ function drawingCount(num) {
 
 function drawingGrid() {
   colorMode(HSB);
-  var yBelow = 300 + GOAL_AMP;
-  var yAbove = 300 - GOAL_AMP;
+  var yBelow = midVal + GOAL_AMP;
+  var yAbove = midVal - GOAL_AMP;
+  console.log(GOAL_AMP);
 
-  stroke((yBelow - 180) % 360, 100, 100);
-  strokeWeight(2);
+  stroke(222, 59, 62);
+  strokeWeight(5);
   line(0, yBelow, width, yBelow);
 
-  stroke((yAbove - 180) % 360, 100, 100);
-  strokeWeight(2);
+  stroke(222, 59, 62);
+  strokeWeight(5);
   line(0, yAbove, width, yAbove);
 
   colorMode(RGB);
   stroke(255, 50);
   strokeWeight(2);
-  for (let i = 100; i < width; i += 100) {
-    line(i, 0, i, height);
+  for (let i = 0; i < width; i += interval) {
+    line(i, 80, i, height);
   }
-  for (let j = 100; j < height; j += 100) {
+  for (let j = 80; j < height; j += interval) {
     line(0, j, width, j);
   }
 
   stroke(255);
-  strokeWeight(2);
-  line(0, 300, width, 300);
+  strokeWeight(8);
+
+  line(0, midVal, width, midVal);
 
   noStroke();
   fill('white');
   textSize(20);
   textAlign(LEFT);
-  for (let i = 100; i < width; i += 200) {
-    text(i / 100 - 5, i, height / 2 + 20);
+  xVal = 0;
+  yVal = 0;
+  for (let i = 0; i < width - interval; i += interval*2) {
+    text(xVal, i, midVal + 25);
+    xVal += 2;
   }
-  for (let j = 100; j < height; j += 400) {
-    text(-j / 100 + 3, width / 2, j);
+  for (let j = 80 + interval; j < height; j += interval*2) {
+    text(-yVal + 2, width / 2 + 5, j - 10);
+    yVal += 2;
   }
 
 }
 
-function drawHeader(y) {
-  fill("#272433");
-  noStroke();
-  rect(0, 0, 1000, 60);
+// function drawHeader(y) {
+//   fill("#272433");
+//   noStroke();
+//   rect(0, 0, 1000, 60);
 
-  noStroke();
-  fill('white');
-  textSize(20);
-  textAlign(CENTER);
-  text("Y-POS: " + Math.round(((300 - y) * 100) / 100), 400, 37);
-  text("GOAL AMP: " + GOAL_AMP_TEXT, 550, 37);
-}
+//   noStroke();
+//   fill('white');
+//   textSize(20);
+//   textAlign(CENTER);
+//   text("Y-POS: " + Math.round(((300 - y) * 100) / 100), 400, 37);
+//   text("GOAL AMP: " + GOAL_AMP_TEXT, 550, 37);
+// }
 
 class Path {
   constructor() {
@@ -288,7 +293,13 @@ class Path {
       diff.mult(this.spacing)
       this.pts.push(p5.Vector.add(this.lastPt, diff));
       d -= this.spacing;
-      this.hue = (y - 180) % 360; // for each new point, update the hue
+
+      if (y > height / 2 + GOAL_AMP || y < height / 2 - GOAL_AMP) {
+        this.hue = 222;
+      } else {
+        // between 170 - 222
+        this.hue = (abs(y - midVal) * (52/(GOAL_AMP))) + 170;
+      }
       this.hues.push(this.hue);
     }
   }
@@ -297,7 +308,7 @@ class Path {
     noStroke()
     for (let i = 0; i < this.pts.length; i++) {
       const p = this.pts[i];
-      fill(this.hues[i], 100, 100)
+      fill(this.hues[i], 59, 62);
       ellipse(p.x, p.y, this.size, this.size);
     }
   }

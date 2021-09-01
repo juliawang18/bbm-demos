@@ -10,20 +10,26 @@ let SLOPE_BASED = false;
 let serial;
 let latestData = "waiting for data";  // you'll use this to write incoming data to the canvas
 let funcPoints = {};
-let offsets = [];
 let startDraw = false;
 let drawGrid = false;
 let isPositive;
+let fromZero = true;
 let FREQ = 0;
 let path;
 let ang;            // Angle
 let rad;            // Angle in radians
 let x;              // XPos of drawing dot
 let y;              // YPos of drawing dot
+let interval;
+let midVal;
+let period = [];
+let periods = [];
 
 function setup() {
-    createCanvas(1000, 600);
-    background("#272433");
+    createCanvas(window.innerWidth, window.innerHeight);
+    background("#ECECEC");
+    interval = window.innerWidth/12;
+    midVal = floor(floor(window.innerHeight / interval) / 2) * interval + 80;
 
     colorMode(HSB, 360, 100, 100);
     path = new Path();
@@ -42,21 +48,23 @@ function setup() {
 
     var button = createButton("restart");
     button.mousePressed(reset);
+    button.style('position', "absolute");
+    button.style('right', "10px");
+    button.style('top', "10px");
     button.style('background-color', "#0055FF");
     button.style('border-radius', "50px");
     button.style('border', "none");
     button.style('color', "white");
     button.style('width', "100px");
     button.style('margin', "auto");
-    button.style('margin-top', "30px");
     button.style('padding', "20px");
     button.style('cursor', "pointer");
     button.style('text-align', "center");
     button.style('font-size', "16px");
-    button.style('font-family', "'Comfortaa', cursive");
+    button.style('font-family', "'Quicksand', san-serif");
 
     // initialize point data
-    y = height / 2;
+    y = midVal;
     x = 0;
 }
 
@@ -126,34 +134,54 @@ function draw() {
 
     if (startDraw) {
         if (drawGrid == true) {
-            background("#272433");
+            background("#ECECEC");
             drawingGrid();
             drawGrid = false;
         }
 
         if (ang != undefined) {
-            drawHeader(y);
             colorMode(HSB);
             path.addPoint(x, y);
+            displayPeriods(periods);
             path.display();
         }
 
-        if (y > 300) {
-            if (!isPositive) {
+        if (y > midVal + 5) {
+            if (!isPositive || fromZero) {
                 FREQ += 1;
                 isPositive = true;
+                if (fromZero) {
+                    period.push(0);
+                } else {
+                    period.push(x);
+                }
+                fromZero = false;
             }
         }
 
-        if (y < 300) {
-            if (isPositive) {
+        if (y < midVal - 5) {
+            if (isPositive || fromZero) {
                 FREQ += 1;
                 isPositive = false;
+                if (fromZero) {
+                    period.push(0);
+                } else {
+                    period.push(x);
+                }
+                fromZero = false;
             }
         }
 
-        if (x > 1000) {
+        if (period.length == 3) {
+            p = sort(period, 3);
+            periods.push(p);
+            period = [];
+            period.push(p[2]);
+        }
+
+        if (x > window.innerWidth) {
             showResults(FREQ/2);
+            console.log(periods);
             noLoop();
         }
 
@@ -162,17 +190,26 @@ function draw() {
             y = y + SPEED * cos(rad) / sin(rad) * SENSITIVITY;
             x = x + SPEED;
         } else {
-            y = - (ang - 90) * SENSITIVITY + 300; // ang mapping
+            y = - (ang - 90) * SENSITIVITY + midVal; // ang mapping
             x = x + SPEED;
         }
     }
 
 }
 
-function reset() {
-    background("#272433");
+function displayPeriods(periods) {
+    colorMode(HSB);
+    for (let i = 0; i < periods.length; i++) {
+        p = periods[i]
+        w = p[2] - p[0];
+        fill(260 * (w / window.innerWidth), 67, 72, 0.5);
+        rect(p[0], 80, w, window.innerHeight - 80);
+    }
+}
 
-    colorMode(HSB, 360, 100, 100);
+function reset() {
+    background("#ECECEC");
+
     path = new Path();
 
     // initialize point data
@@ -184,31 +221,26 @@ function reset() {
     funcPoints = [];
     startDraw = false;
     drawGrid = false;
+    fromZero = true;
+    periods = [];
+    period = [];
     loop();
 }
 
 function showResults(count) {
-    clear();
-    background("#272433");
-    drawingGrid();
-    background('rgba(0,0,0, 0.7)');
-
-    colorMode(HSB);
-    path.display();
-
-    fill("white");
+    fill(255);
     textAlign(CENTER);
     textSize(100);
-    text(count, width / 2, 100);
+    text(count - 0.5, width / 2, window.innerHeight - 230);
     textSize(20);
-    text("CYCLES PER SCREEN!", width / 2, 140);
+    text("FULL CYCLES PER SCREEN!", width / 2, window.innerHeight - 180);
 }
 
 function drawingCount(num) {
     clear();
-    background("#272433");
+    background("#ECECEC");
     drawingGrid();
-    background('rgba(0,0,0, 0.7)');
+    background('rgba(0,0,0, 0.3)');
     textAlign(CENTER);
     textSize(100);
     text(num, width / 2, height / 2);
@@ -216,42 +248,31 @@ function drawingCount(num) {
 
 function drawingGrid() {
     colorMode(RGB);
-    stroke(255, 50);
+    stroke(150, 50);
     strokeWeight(2);
-    for (let i = 100; i < width; i += 100) {
-        line(i, 0, i, height);
+    for (let i = 0; i < width; i += interval) {
+      line(i, 80, i, height);
     }
-    for (let j = 100; j < height; j += 100) {
-        line(0, j, width, j);
+    for (let j = 80; j < height; j += interval) {
+      line(0, j, width, j);
     }
-
-    stroke(255);
-    strokeWeight(2);
-    line(0, 300, width, 300);
-
+  
+    stroke(200);
+    strokeWeight(8);
+  
+    line(0, midVal, width, midVal);
+  
     noStroke();
-    fill('white');
+    fill(150);
     textSize(20);
     textAlign(LEFT);
-    for (let i = 100; i < width; i += 200) {
-        text(i / 100 - 5, i, height / 2 + 20);
+    xVal = 0;
+    yVal = 0;
+    for (let i = 0; i < width - interval; i += interval*2) {
+      text(xVal, i + 5, midVal + 25);
+      xVal += 2;
     }
-    for (let j = 100; j < height; j += 400) {
-        text(-j / 100 + 3, width / 2, j);
-    }
-}
-
-function drawHeader(y) {
-    fill("#272433");
-    noStroke();
-    rect(0, 0, 1000, 60);
-
-    noStroke();
-    fill('white');
-    textSize(20);
-    textAlign(CENTER);
-    text("CURR FREQ: " + FREQ / 2 + "cycles/sec", 350, 37);
-    text("GOAL FREQ: " + GOAL_FREQ + "cycles/sec", 650, 37);
+  
 }
 
 class Path {
@@ -259,8 +280,6 @@ class Path {
         this.pts = [];
         this.size = BRUSH_SIZE; // size of brush
         this.spacing = 1; // spacing between points; lower value gives you smoother path, but frame rate will drop
-        this.hue = random(360); // start value
-        this.hues = []; // keep track of the hues for each point
     }
 
     get lastPt() {
@@ -270,7 +289,6 @@ class Path {
     addPoint(x, y) {
         if (this.pts.length < 1) {
             this.pts.push(new p5.Vector(x, y));
-            this.hues.push(this.hue);
             return;
         }
 
@@ -283,16 +301,15 @@ class Path {
             diff.mult(this.spacing)
             this.pts.push(p5.Vector.add(this.lastPt, diff));
             d -= this.spacing;
-            this.hue = (this.hue + 1) % 360; // for each new point, update the hue
-            this.hues.push(this.hue);
         }
     }
 
     display() {
-        noStroke()
+        noStroke();
+        colorMode(RGB);
         for (let i = 0; i < this.pts.length; i++) {
             const p = this.pts[i];
-            fill(this.hues[i], 100, 100);
+            fill(255);
             ellipse(p.x, p.y, this.size, this.size);
         }
     }
