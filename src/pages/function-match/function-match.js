@@ -239,7 +239,7 @@ function initGame() {
   textAlign(CENTER);
   textSize(30);
   fill(255);
-  text("Match the function as well as you can!", width / 2, height / 2 - 100);
+  text("Figure out how to draw green the whole time!", width / 2, height / 2 - 100);
   textSize(20);
   text("(click anywhere to start)", width / 2, height / 2);
 }
