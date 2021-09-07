@@ -21,12 +21,13 @@ canvas {
     text-decoration: none;
     display: inline-block;
     font-size: 16px;
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Comfortaa', sans-serif;
     font-weight: 600;
 }
 
-.button:hover {
-    color: #000000da;
+.home-button:hover {
+    background-color: #3a7cff;
+    color: #FFF;
 }
 
 .back-button {
@@ -38,24 +39,27 @@ canvas {
     color: #33333371;
 }
 
+.back-button:hover {
+    color: rgba(0, 0, 0, 0.7);
+}
+
 .button-group {
     margin: 0 auto;
-    margin-top: 50px;
-    margin-bottom: 100px;
 }
 
 .title {
     margin: 0 auto;
     font-size: 32px;
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Comfortaa', sans-serif;
     font-weight: 600;
     color:#5850507e;
 }
 
 .title-home {
     margin: 0 auto;
+    margin-bottom: 50px;
     font-size: 32px;
-    font-family: 'Quicksand', sans-serif;
+    font-family: 'Comfortaa', sans-serif;
     font-weight: 600;
 }
 

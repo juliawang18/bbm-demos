@@ -1,6 +1,6 @@
 // CONSTANTS TO CHANGE //
-let portName = "/dev/tty.usbmodem14201";
-let SPEED = 5;
+let portName = "/dev/tty.usbmodem142101";
+let SPEED = 6;
 let SENSITIVITY = 10;
 let BRUSH_SIZE = 20;
 let GOAL_AMP_TEXT = 2;
@@ -11,6 +11,7 @@ let latestData = "waiting for data";  // you'll use this to write incoming data 
 let funcPoints = [];
 let startDraw = false;
 let drawGrid = false;
+let gameScreen = 0;
 let reachedAmp;
 let COUNT = 0;
 let path;
@@ -29,7 +30,7 @@ function setup() {
   colorMode(HSB, 360, 100, 100);
   path = new Path();
 
-  interval = window.innerWidth/12;
+  interval = window.innerWidth / 12;
   midVal = floor(floor(window.innerHeight / interval) / 2) * interval + 80;
   GOAL_AMP = GOAL_AMP_TEXT * interval;
 
@@ -65,6 +66,8 @@ function setup() {
   // initialize point data
   y = midVal;
   x = 0;
+
+  frameRate(90);
 }
 
 // We are connected and ready to go
@@ -105,63 +108,69 @@ function gotData() {
 
   if (incomingAngle > 0) {
     ang = 270 - incomingAngle;
-} else {
+  } else {
     ang = -90 - incomingAngle;
-}
+  }
 }
 
 function draw() {
 
-  if (frameCount == 50) {
-    drawingCount("3");
-  } else if (frameCount == 100) {
-    drawingCount("2");
-  } else if (frameCount == 150) {
-    drawingCount("1");
-  } else if (frameCount > 200) {
-    startDraw = true;
-    drawGrid = true;
-  }
+  if (gameScreen == 0) {
+    initGame();
 
-  if (startDraw) {
-    if (drawGrid == true) {
-      background("#F4705F");
-      drawingGrid();
-      drawGrid = false;
+  } else if (gameScreen == 1) {
+    if (frameCount == 75) {
+      drawingCount("3");
+    } else if (frameCount == 150) {
+      drawingCount("2");
+    } else if (frameCount == 225) {
+      drawingCount("1");
+    } else if (frameCount > 300) {
+      startDraw = true;
+      drawGrid = true;
     }
 
-    if (y > height / 2 + GOAL_AMP) {
-      if (!reachedAmp) {
-        COUNT += 1;
-        reachedAmp = true;
+    if (startDraw) {
+      if (drawGrid == true) {
+        background("#F4705F");
+        drawingGrid();
+        drawGrid = false;
+      }
+
+      if (y > midVal + GOAL_AMP) {
+        if (!reachedAmp) {
+          COUNT += 1;
+          reachedAmp = true;
+        }
+      }
+
+      if (y < midVal + GOAL_AMP && y > midVal - GOAL_AMP) {
+        reachedAmp = false;
+      }
+
+      if (y < midVal - GOAL_AMP) {
+        if (!reachedAmp) {
+          COUNT += 1;
+          reachedAmp = true;
+        }
+      }
+
+      colorMode(HSB);
+      if (ang != undefined) {
+        path.addPoint(x, y);
+        path.display();
+      }
+
+      // increment point x and y
+      y = - (ang - 90) * SENSITIVITY + midVal; // ang mapping
+      x = x + SPEED;
+
+      if (x > window.innerWidth) {
+        showResults(COUNT);
+        noLoop();
       }
     }
 
-    if (y < height / 2 + GOAL_AMP && y > height / 2 - GOAL_AMP) {
-      reachedAmp = false;
-    }
-
-    if (y < height / 2 - GOAL_AMP) {
-      if (!reachedAmp) {
-        COUNT += 1;
-        reachedAmp = true;
-      }
-    }
-
-    colorMode(HSB);
-    if (ang != undefined) {
-      path.addPoint(x, y);
-      path.display();
-    }
-
-    // increment point x and y
-    y = - (ang - 90) * SENSITIVITY + midVal; // ang mapping
-    x = x + SPEED;
-
-    if (x > window.innerWidth) {
-      showResults(COUNT);
-      noLoop();
-    }
   }
 
 }
@@ -205,17 +214,39 @@ function drawingCount(num) {
   text(num, width / 2, height / 2);
 }
 
+function mousePressed() {
+  if (gameScreen == 0) {
+    startGame();
+  }
+}
+
+function startGame() {
+  gameScreen = 1;
+  frameCount = 0;
+}
+
+function initGame() {
+  background("#F4705F");
+  drawingGrid();
+  background('rgba(0,0,0, 0.2)');
+  textAlign(CENTER);
+  textSize(30);
+  fill(255);
+  text("Goal amplitude: " + GOAL_AMP_TEXT, width / 2, height / 2 - 100);
+  textSize(20);
+  text("(click anywhere to start)", width / 2, height / 2);
+}
+
 function drawingGrid() {
   colorMode(HSB);
   var yBelow = midVal + GOAL_AMP;
   var yAbove = midVal - GOAL_AMP;
-  console.log(GOAL_AMP);
 
-  stroke(222, 59, 62);
+  stroke(115, 100, 100);
   strokeWeight(5);
   line(0, yBelow, width, yBelow);
 
-  stroke(222, 59, 62);
+  stroke(115, 100, 100);
   strokeWeight(5);
   line(0, yAbove, width, yAbove);
 
@@ -240,35 +271,31 @@ function drawingGrid() {
   textAlign(LEFT);
   xVal = 0;
   yVal = 0;
-  for (let i = 0; i < width - interval; i += interval*2) {
+  for (let i = 0; i < width - interval; i += interval * 2) {
     text(xVal, i, midVal + 25);
     xVal += 2;
   }
-  for (let j = 80 + interval; j < height; j += interval*2) {
+  for (let j = 80 + interval; j < height; j += interval * 2) {
     text(-yVal + 2, width / 2 + 5, j - 10);
     yVal += 2;
   }
 
 }
 
-// function drawHeader(y) {
-//   fill("#272433");
-//   noStroke();
-//   rect(0, 0, 1000, 60);
-
-//   noStroke();
-//   fill('white');
-//   textSize(20);
-//   textAlign(CENTER);
-//   text("Y-POS: " + Math.round(((300 - y) * 100) / 100), 400, 37);
-//   text("GOAL AMP: " + GOAL_AMP_TEXT, 550, 37);
-// }
+function calcDistanceFromAmp(x, y) {
+  var yBelow = midVal + GOAL_AMP;
+  var yAbove = midVal - GOAL_AMP;
+  if (y < midVal) {
+    return dist(x, y, x, yAbove);
+  }
+  return dist(x, y, x, yBelow);
+}
 
 class Path {
   constructor() {
     this.pts = [];
     this.size = BRUSH_SIZE; // size of brush
-    this.spacing = 0.3; // spacing between points; lower value gives you smoother path, but frame rate will drop
+    this.spacing = 0.4; // spacing between points; lower value gives you smoother path, but frame rate will drop
     this.hue = 150; // start value
     this.hues = []; // keep track of the hues for each point
   }
@@ -294,12 +321,14 @@ class Path {
       this.pts.push(p5.Vector.add(this.lastPt, diff));
       d -= this.spacing;
 
-      if (y > height / 2 + GOAL_AMP || y < height / 2 - GOAL_AMP) {
-        this.hue = 222;
+      let distance = calcDistanceFromAmp(x, y);
+
+      if (distance > 50) {
+        this.hue = 0;
       } else {
-        // between 170 - 222
-        this.hue = (abs(y - midVal) * (52/(GOAL_AMP))) + 170;
+        this.hue = 100 - (distance * 2);
       }
+
       this.hues.push(this.hue);
     }
   }
@@ -308,7 +337,7 @@ class Path {
     noStroke()
     for (let i = 0; i < this.pts.length; i++) {
       const p = this.pts[i];
-      fill(this.hues[i], 59, 62);
+      fill(115, this.hues[i], 100);
       ellipse(p.x, p.y, this.size, this.size);
     }
   }

@@ -10,13 +10,12 @@ let SLOPE_BASED = false;
 let serial;
 let latestData = "waiting for data";  // you'll use this to write incoming data to the canvas
 let funcPoints = {};
-let gameScreen = 0;
 let startDraw = false;
 let drawGrid = false;
 let isPositive;
 let fromZero = true;
 let FREQ = 0;
-let goalPeriodLength = window.innerWidth / GOAL_FREQ;
+let goalPeriodLength = window.innerWidth/GOAL_FREQ;
 let path;
 let ang;            // Angle
 let rad;            // Angle in radians
@@ -30,7 +29,7 @@ let periods = [];
 function setup() {
     createCanvas(window.innerWidth, window.innerHeight);
     background("#ECECEC");
-    interval = window.innerWidth / 12;
+    interval = window.innerWidth/12;
     midVal = floor(floor(window.innerHeight / interval) / 2) * interval + 80;
 
     colorMode(HSB, 360, 100, 100);
@@ -118,110 +117,49 @@ function gotData() {
 }
 
 function draw() {
-    
-    if (gameScreen == 0) {
-        initGame();
+    textSize(50);
+    textAlign(CENTER);
+    noStroke();
+    fill('white');
 
-    } else if (gameScreen == 1) {
+    if (frameCount == 50) {
+        drawingCount("3");
+    } else if (frameCount == 100) {
+        drawingCount("2");
+    } else if (frameCount == 150) {
+        drawingCount("1");
+    } else if (frameCount > 200) {
+        startDraw = true;
+        drawGrid = true;
+    }
 
-        if (frameCount == 50) {
-            drawingCount("3");
-        } else if (frameCount == 100) {
-            drawingCount("2");
-        } else if (frameCount == 150) {
-            drawingCount("1");
-        } else if (frameCount > 200) {
-            startDraw = true;
-            drawGrid = true;
+    if (startDraw) {
+        if (drawGrid == true) {
+            background("#ECECEC");
+            drawingGrid();
+            drawGrid = false;
         }
 
-        if (startDraw) {
-            if (drawGrid == true) {
-                background("#ECECEC");
-                drawingGrid();
-                drawGrid = false;
-            }
-
-            if (ang != undefined) {
-                colorMode(HSB);
-                path.addPoint(x, y);
-                displayPeriods(periods);
-                path.display();
-            }
-
-            if (y > midVal + 5) {
-                if (!isPositive || fromZero) {
-                    FREQ += 1;
-                    isPositive = true;
-                    if (fromZero) {
-                        period.push(0);
-                    } else {
-                        period.push(x);
-                    }
-                    fromZero = false;
-                }
-            }
-
-            if (y < midVal - 5) {
-                if (isPositive || fromZero) {
-                    FREQ += 1;
-                    isPositive = false;
-                    if (fromZero) {
-                        period.push(0);
-                    } else {
-                        period.push(x);
-                    }
-                    fromZero = false;
-                }
-            }
-
-            if (period.length == 3) {
-                p = sort(period, 3);
-                periods.push(p);
-                period = [];
-                period.push(p[2]);
-            }
-
-            if (x > window.innerWidth) {
-                showResults(FREQ / 2);
-                noLoop();
-            }
-
-            if (SLOPE_BASED) {
-                rad = (ang / 180) * PI; // slope mapping
-                y = y + SPEED * cos(rad) / sin(rad) * SENSITIVITY;
-                x = x + SPEED;
-            } else {
-                y = - (ang - 90) * SENSITIVITY + midVal; // ang mapping
-                x = x + SPEED;
-            }
+        if (ang != undefined) {
+            colorMode(HSB);
+            path.addPoint(x, y);
+            path.display();
         }
 
+        if (x > window.innerWidth) {
+            noLoop();
+        }
 
+        if (SLOPE_BASED) {
+            rad = (ang / 180) * PI; // slope mapping
+            y = y + SPEED * cos(rad) / sin(rad) * SENSITIVITY;
+            x = x + SPEED;
+        } else {
+            y = - (ang - 90) * SENSITIVITY + midVal; // ang mapping
+            x = x + SPEED;
+        }
     }
-}
 
-function mousePressed() {
-    // if we are on the initial screen when clicked, start the game
-    if (gameScreen == 0) {
-        startGame();
-    }
-}
-
-function startGame() {
-    gameScreen = 1;
-    frameCount = 0;
-}
-
-function displayPeriods(periods) {
-    colorMode(HSB);
-    for (let i = 0; i < periods.length; i++) {
-        p = periods[i]
-        w = p[2] - p[0];
-        dist = abs(goalPeriodLength - w);
-        fill(115 - dist, 82, 82, 0.5);
-        rect(p[0], 80, w, window.innerHeight - 80);
-    }
 }
 
 function reset() {
@@ -244,38 +182,14 @@ function reset() {
     loop();
 }
 
-function showResults(count) {
-    fill(255);
-    textAlign(CENTER);
-    textSize(100);
-    text(count - 0.5, width / 2, window.innerHeight - 230);
-    textSize(20);
-    text("FULL CYCLES PER SCREEN!", width / 2, window.innerHeight - 180);
-}
-
 function drawingCount(num) {
     clear();
     background("#ECECEC");
     drawingGrid();
-    background('rgba(0,0,0, 0.2)');
+    background('rgba(0,0,0, 0.3)');
     textAlign(CENTER);
     textSize(100);
     text(num, width / 2, height / 2);
-    textSize(30);
-    fill(100);
-    text("Goal: " + GOAL_FREQ + " cycles per screen!", width / 2, height / 2 - 100);
-}
-
-function initGame() {
-    background("#ECECEC");
-    drawingGrid();
-    background('rgba(0,0,0, 0.2)');
-    textAlign(CENTER);
-    textSize(30);
-    fill(50);
-    text("Goal: " + GOAL_FREQ + " cycles per screen!", width / 2, height / 2 - 100);
-    textSize(20);
-    text("(click anywhere to start)", width / 2, height / 2);
 }
 
 function drawingGrid() {
@@ -283,28 +197,28 @@ function drawingGrid() {
     stroke(150, 50);
     strokeWeight(2);
     for (let i = 0; i < width; i += interval) {
-        line(i, 80, i, height);
+      line(i, 80, i, height);
     }
     for (let j = 80; j < height; j += interval) {
-        line(0, j, width, j);
+      line(0, j, width, j);
     }
-
+  
     stroke(200);
     strokeWeight(8);
-
+  
     line(0, midVal, width, midVal);
-
+  
     noStroke();
     fill(150);
     textSize(20);
     textAlign(LEFT);
     xVal = 0;
     yVal = 0;
-    for (let i = 0; i < width - interval; i += interval * 2) {
-        text(xVal, i + 5, midVal + 25);
-        xVal += 2;
+    for (let i = 0; i < width - interval; i += interval*2) {
+      text(xVal, i + 5, midVal + 25);
+      xVal += 2;
     }
-
+  
 }
 
 class Path {
@@ -341,7 +255,7 @@ class Path {
         colorMode(RGB);
         for (let i = 0; i < this.pts.length; i++) {
             const p = this.pts[i];
-            fill(255);
+            fill(150);
             ellipse(p.x, p.y, this.size, this.size);
         }
     }
