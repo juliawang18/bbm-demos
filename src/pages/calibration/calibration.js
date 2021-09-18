@@ -1,5 +1,5 @@
 // CONSTANTS TO CHANGE //
-let portName = "/dev/tty.usbmodem142101";
+let portName = "/dev/tty.usbmodem14201";
 let SPEED = 2;
 let SENSITIVITY = 7;
 let BRUSH_SIZE = 20;
@@ -109,10 +109,10 @@ function gotData() {
         ang = float(incomingAngle) + 90;
     } else {
         if (incomingAngle > 0) {
-            ang = 270 - incomingAngle;
-        } else {
-            ang = -90 - incomingAngle;
-        }
+            ang = incomingAngle - 90;
+          } else {
+            ang = 270 + incomingAngle;
+          }
     }
 }
 

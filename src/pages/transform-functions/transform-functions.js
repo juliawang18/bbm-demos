@@ -1,7 +1,7 @@
 // CONSTANTS TO CHANGE //
 let portName = "/dev/tty.usbmodem142101";
-let SPEED = 3;
-let SENSITIVITY = 10;
+let SPEED = 20;
+let SENSITIVITY = 5;
 let BRUSH_SIZE = 20;
 let SLOPE_BASED = false;
 let TOLERANCE = 40;
@@ -211,6 +211,19 @@ function drawingFunction() {
   noStroke();
 }
 
+function drawingFunctionWithoutPoint() {
+  colorMode(RGB);
+  for (let i = 0; i < width; i += SPEED) {
+    let xPoint = i;
+    let yPoint = func(i / 100) * 100 + (height / 2);
+
+    stroke(255, 255, 255, 50);
+    strokeWeight(10);
+    point(xPoint, yPoint);
+  }
+  noStroke();
+}
+
 function drawingCount(num) {
   clear();
   background("#424D75");
@@ -264,6 +277,7 @@ function reset() {
 
 function drawHappyEnding(sum) {
   background("#07A87C");
+  drawingFunctionWithoutPoint();
   path.display();
 
   noStroke();
@@ -279,6 +293,7 @@ function drawHappyEnding(sum) {
 
 function drawSadEnding(sum) {
   background("#DA7045");
+  drawingFunctionWithoutPoint();
   path.display();
 
   noStroke();

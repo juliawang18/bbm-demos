@@ -1,14 +1,10 @@
 // CONSTANTS TO CHANGE //
-let portName = "/dev/tty.usbmodem142101";
-let SPEED = 3;
-let SENSITIVITY = 10;
+let portName = "/dev/tty.usbmodem14201";
+let SPEED = 5;
+let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
 let SLOPE_BASED = false;
 let TOLERANCE = 40;
-
-function func(x) {
-  return sin(x);
-}
 
 // DO NOT TOUCH BELOW //
 let serial;
@@ -26,16 +22,31 @@ let y;              // YPos of drawing dot
 let goodImg, badImg;
 let midVal;
 
+let a = 1;
+let k = 1; 
+let c = 0; 
+
+function func(x) {
+  return a * sin(k * (x + c));
+}
+
 function setup() {
   midVal = window.innerHeight / 2;
   createCanvas(window.innerWidth, window.innerHeight);
-  background("#424D75");
+  background("#11141D");
 
   colorMode(HSB, 360, 100, 100);
   path = new Path();
 
   goodImg = loadImage("assets/good1.png");
   badImg = loadImage("assets/notsogood3.png");
+  funcImg = loadImage("assets/function.png");
+  aAddButton = loadImage("assets/add.png");
+  kAddButton = loadImage("assets/add.png");
+  cAddButton = loadImage("assets/add.png");
+  aSubButton = loadImage("assets/sub.png");
+  kSubButton = loadImage("assets/sub.png");
+  cSubButton = loadImage("assets/sub.png");
 
   // Instantiate our SerialPort object
   serial = new p5.SerialPort();
@@ -111,9 +122,9 @@ function gotData() {
     ang = -float(incomingAngle) + 90;
   } else {
     if (incomingAngle > 0) {
-      ang = 270 - incomingAngle;
+      ang = incomingAngle - 90;
     } else {
-      ang = -90 - incomingAngle;
+      ang = 270 + incomingAngle;
     }
   }
 }
@@ -142,13 +153,13 @@ function draw() {
 
     if (startDraw) {
       if (drawFunction == true) {
-        background("#424D75");
+        background("#11141D");
         for (let i = 0; i < width; i += SPEED) {
           let xPoint = i;
           let yPoint = func(i / 100) * 100 + (height / 2);
 
           colorMode(RGB);
-          stroke(255, 255, 255, 50);
+          stroke(255, 255, 255, 150);
           strokeWeight(10);
           point(xPoint, yPoint);
 
@@ -202,7 +213,7 @@ function drawingFunction() {
     let xPoint = i;
     let yPoint = func(i / 100) * 100 + (height / 2);
 
-    stroke(255, 255, 255, 50);
+    stroke(255, 255, 255, 150);
     strokeWeight(10);
     point(xPoint, yPoint);
 
@@ -211,15 +222,34 @@ function drawingFunction() {
   noStroke();
 }
 
+function drawingFunctionNoPoint() {
+  colorMode(RGB);
+  for (let i = 0; i < width; i += SPEED) {
+    let xPoint = i;
+    let yPoint = func(i / 100) * 100 + (height / 2);
+
+    stroke(255, 255, 255, 150);
+    strokeWeight(10);
+    point(xPoint, yPoint);
+  }
+  noStroke();
+}
+
 function drawingCount(num) {
   clear();
-  background("#424D75");
+  background("#11141D");
   drawingFunction();
   background('rgba(0,0,0, 0.3)');
   textAlign(CENTER);
   textSize(100);
   text(num, width / 2, height / 2);
 }
+
+// function drawFunction() {
+//   textAlign(CENTER);
+//   textSize(100);
+//   text(str(a) + "sin(" + str(k) + (x + c)), width / 2, height / 2);
+// }
 
 function mousePressed() {
   if (gameScreen == 0) {
@@ -233,23 +263,30 @@ function startGame() {
 }
 
 function initGame() {
-  background("#424D75");
+  background("#11141D");
   background('rgba(0,0,0, 0.2)');
   drawingFunction();
   textAlign(CENTER);
   textSize(30);
   fill(255);
   text("Figure out how to draw green the whole time!", width / 2, height / 2 - 100);
+  // imageMode(CENTER);
+  // image(funcImg, window.innerWidth / 2, window.innerHeight / 2, window.innerWidth * 0.4, window.innerHeight * 0.1);
+  // textSize(40);
+  // text(str(a), window.innerWidth * 0.325, window.innerHeight / 2 + 15);
+  // text(str(k), window.innerWidth * 0.49, window.innerHeight / 2 + 15);
+  // text(str(c), window.innerWidth * 0.64, window.innerHeight / 2 + 15);
   textSize(20);
-  text("(click anywhere to start)", width / 2, height / 2);
+  text("(click anywhere to start)", width / 2, height / 2 + 150);
+  // createButtons();
 }
 
 function reset() {
-  background("#424D75");
+  background("#11141D");
 
   path = new Path();
 
-  // initialize point data
+  // initialize point data  
   y = height / 2;
   x = 0;
 
@@ -258,12 +295,13 @@ function reset() {
   funcPoints = {};
   offsets = [];
   startDraw = false;
-  drawFunction = false;
+  drawFunction = false; 
   loop();
 }
 
 function drawHappyEnding(sum) {
   background("#07A87C");
+  drawingFunctionNoPoint();
   path.display();
 
   noStroke();
@@ -279,6 +317,7 @@ function drawHappyEnding(sum) {
 
 function drawSadEnding(sum) {
   background("#DA7045");
+  drawingFunctionNoPoint();
   path.display();
 
   noStroke();
@@ -294,6 +333,21 @@ function drawSadEnding(sum) {
 
 function calcDistance(correctPoint, userPoint) {
   return dist(userPoint[0], userPoint[1], correctPoint[0], correctPoint[1]);
+}
+
+function createButtons() {
+  image(aAddButton, window.innerWidth * 0.312, window.innerHeight * 0.6, window.innerWidth * 0.025, window.innerHeight * 0.05);
+  image(kAddButton, window.innerWidth / 2, window.innerHeight * 0.6, window.innerWidth * 0.025, window.innerHeight * 0.05);
+  image(cAddButton, window.innerWidth / 2, window.innerHeight * 0.6, window.innerWidth * 0.025, window.innerHeight * 0.05);
+  image(aSubButton, window.innerWidth * 0.33, window.innerHeight * 0.57, window.innerWidth * 0.025, window.innerHeight * 0.05);
+  image(kSubButton, window.innerWidth / 2, window.innerHeight * 0.6, window.innerWidth * 0.025, window.innerHeight * 0.05);
+  image(cSubButton, window.innerWidth / 2, window.innerHeight * 0.6, window.innerWidth * 0.025, window.innerHeight * 0.05);
+  // aAddButton.position(0.72 * window.innerWidth, 0.175 * window.innerHeight).mousePressed(function(){ a+=1;});
+  // kAddButton.position(0.78 * window.innerWidth, 0.175 * window.innerHeight).mousePressed(function(){ k+=1;});
+  // cAddButton.position(0.72 * window.innerWidth, 0.280 * window.innerHeight).mousePressed(function(){ c+=1;});
+  // aSubButton.position(0.78 * window.innerWidth, 0.280 * window.innerHeight).mousePressed(function(){ a-=1; });
+  // kSubButton.position(0.72 * window.innerWidth, 0.385 * window.innerHeight).mousePressed(function(){ k-=1; });
+  // cSubButton.position(0.72 * window.innerWidth, 0.385 * window.innerHeight).mousePressed(function(){ c-=1; });
 }
 
 class Path {

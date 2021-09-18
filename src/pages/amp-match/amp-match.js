@@ -1,7 +1,7 @@
 // CONSTANTS TO CHANGE //
-let portName = "/dev/tty.usbmodem142101";
+let portName = "/dev/tty.usbmodem14201";
 let SPEED = 6;
-let SENSITIVITY = 10;
+let SENSITIVITY = 13;
 let BRUSH_SIZE = 20;
 let GOAL_AMP_TEXT = 2;
 
@@ -107,9 +107,9 @@ function gotData() {
   incomingAngle = float(incomingAngle);
 
   if (incomingAngle > 0) {
-    ang = 270 - incomingAngle;
+    ang = incomingAngle - 90;
   } else {
-    ang = -90 - incomingAngle;
+    ang = 270 + incomingAngle;
   }
 }
 
@@ -193,7 +193,9 @@ function reset() {
   loop();
 }
 
+// shows results page
 function showResults(count) {
+  background('rgba(0,0,0, 0.3)');
   fill("white");
   textAlign(CENTER);
   textSize(20);
@@ -204,6 +206,7 @@ function showResults(count) {
   text("TIMES", width / 2, height / 2 + 40);
 }
 
+// draws each countdown page
 function drawingCount(num) {
   clear();
   background("#F4705F");
@@ -214,17 +217,20 @@ function drawingCount(num) {
   text(num, width / 2, height / 2);
 }
 
+// if the user cliccks begin the game
 function mousePressed() {
   if (gameScreen == 0) {
     startGame();
   }
 }
 
+// start the countdown
 function startGame() {
   gameScreen = 1;
   frameCount = 0;
 }
 
+// first screen
 function initGame() {
   background("#F4705F");
   drawingGrid();
@@ -237,6 +243,7 @@ function initGame() {
   text("(click anywhere to start)", width / 2, height / 2);
 }
 
+// draws grid
 function drawingGrid() {
   colorMode(HSB);
   var yBelow = midVal + GOAL_AMP;
