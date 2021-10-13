@@ -1,38 +1,58 @@
-// CONSTANTS TO CHANGE //
-let portName = "/dev/tty.usbmodem14201";
-let SPEED = 6;
-let SENSITIVITY = 13;
+// <------- CONSTANTS TO CHANGE -------> //
+let portName = "/dev/tty.usbmodem142101";
+let SPEED = 5;
+let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
-let GOAL_AMP_TEXT = 2;
+let GOAL_AMP = 2;
+let GRID_SIZE = 11;
 
-// DO NOT TOUCH BELOW //
+// <------- DO NOT TOUCH BELOW -------> //
+
+// serial communication
 let serial;
-let latestData = "waiting for data";  // you'll use this to write incoming data to the canvas
-let funcPoints = [];
+let latestData = "waiting for data";  
+
+// declare styles
+let backgroundColor;
+let goalColor;
+let font;
+
+// declare sounds
+let playerOsc;
+
+// notes
+let highC = 523.251;
+let middleC = 261.63;
+let lowerC = 130.813;
+
+// global vars
+let gameScreen;
 let startDraw = false;
-let drawGrid = false;
-let gameScreen = 0;
-let reachedAmp;
-let COUNT = 0;
-let path;
-let ang;            // Angle
-let rad;            // Angle in radians
-let x;              // XPos of drawing dot
-let y;              // YPos of drawing dot
-let interval;
+
+let ampCount = 0;
+
+let gridIncrement;
 let midVal;
-let GOAL_AMP
+let ampAbove;
+let ampBelow;
+
+let path;
+
+let ang;
+let x;
+let y;
+
+function preload() {
+  // loaders
+  loadColors();
+  loadFonts();
+}
 
 function setup() {
+  // visual setup
   createCanvas(window.innerWidth, window.innerHeight);
-  background("#F4705F");
-
-  colorMode(HSB, 360, 100, 100);
-  path = new Path();
-
-  interval = window.innerWidth / 12;
-  midVal = floor(floor(window.innerHeight / interval) / 2) * interval + 80;
-  GOAL_AMP = GOAL_AMP_TEXT * interval;
+  background(backgroundColor);
+  textFont(font);
 
   // Instantiate our SerialPort object
   serial = new p5.SerialPort();
@@ -46,46 +66,61 @@ function setup() {
   serial.on('open', gotOpen);
   serial.on('close', gotClose);
 
-  var button = createButton("restart");
-  button.mousePressed(reset);
-  button.style('position', "absolute");
-  button.style('right', "10px");
-  button.style('top', "10px");
-  button.style('background-color', "#0055FF");
-  button.style('border-radius', "50px");
-  button.style('border', "none");
-  button.style('color', "white");
-  button.style('width', "100px");
-  button.style('margin', "auto");
-  button.style('padding', "20px");
-  button.style('cursor', "pointer");
-  button.style('text-align', "center");
-  button.style('font-size', "16px");
-  button.style('font-family', "'Quicksand', san-serif");
-
-  // initialize point data
-  y = midVal;
+  // initialize data
+  gameScreen = 0;
+  gridIncrement = width / GRID_SIZE;
+  midVal = floor((height / gridIncrement) / 2) * gridIncrement;
+  ampAbove = midVal - GOAL_AMP * gridIncrement;
+  ampBelow = midVal + GOAL_AMP * gridIncrement;
+  path = new Path(BRUSH_SIZE, midVal, ampAbove, ampBelow);
+  y = height / 2;
   x = 0;
 
-  frameRate(90);
+  // start sound
+  playerOsc = new p5.SinOsc();
+  playerOsc.start();
+  playerOsc.freq(middleC);
 }
 
-// We are connected and ready to go
+function draw() {
+  background(backgroundColor);
+  
+  if (gameScreen == 0) {
+    initGame();
+  } else if (gameScreen == 1) {
+    playGame();
+  }
+
+}
+
+// <------------- PRELOAD FUNCTIONS -------------> //
+// load colors 
+function loadColors() {
+  colorMode(HSB, 360, 100, 100);
+  backgroundColor = color(41, 78, 100);
+  goalColor = color(155, 100, 85);
+}
+
+// load fonts 
+function loadFonts() {
+  font = loadFont("../../assets/fonts/Whyte-Medium.otf");
+}
+
+// <------------- SETUP FUNCTIONS -------------> //
+// we are connected and ready to go
 function serverConnected() {
   print("Connected to Server");
 }
 
-// Got the list of ports
+// got the list of ports
 function gotList(thelist) {
   print("List of Serial Ports:");
-  // theList is an array of their names
   for (let i = 0; i < thelist.length; i++) {
-    // Display in the console
     print(i + " " + thelist[i]);
   }
 }
 
-// Connected to our serial device
+// connected to our serial device
 function gotOpen() {
   print("Serial Port is Open");
 }
@@ -95,257 +130,173 @@ function gotClose() {
   latestData = "Serial Port is Closed";
 }
 
-// Ut oh, here is an error, let's log it
+// if there is an error, log it
 function gotError(theerror) {
   print(theerror);
 }
 
-// There is data available to work with from the serial port
+// there is data available to work with from the serial port
 function gotData() {
-  let incomingAngle = serial.readStringUntil('\n');  // read the incoming string 
-  if (!incomingAngle) return;             // if the string is empty, do no more
+  let incomingAngle = serial.readStringUntil('\n'); 
+  if (!incomingAngle) return;           
   incomingAngle = float(incomingAngle);
 
-  if (incomingAngle > 0) {
-    ang = incomingAngle - 90;
-  } else {
-    ang = 270 + incomingAngle;
-  }
+  // altering incoming angle val to fit interaction
+  // if (incomingAngle > 0) {
+  //   ang = incomingAngle - 90;
+  // } else {
+  //   ang = 270 + incomingAngle;
+  // }
+  ang = incomingAngle + 90;
 }
 
-function draw() {
-
-  if (gameScreen == 0) {
-    initGame();
-
-  } else if (gameScreen == 1) {
-    if (frameCount == 75) {
-      drawingCount("3");
-    } else if (frameCount == 150) {
-      drawingCount("2");
-    } else if (frameCount == 225) {
-      drawingCount("1");
-    } else if (frameCount > 300) {
-      startDraw = true;
-      drawGrid = true;
-    }
-
-    if (startDraw) {
-      if (drawGrid == true) {
-        background("#F4705F");
-        drawingGrid();
-        drawGrid = false;
-      }
-
-      if (y > midVal + GOAL_AMP) {
-        if (!reachedAmp) {
-          COUNT += 1;
-          reachedAmp = true;
-        }
-      }
-
-      if (y < midVal + GOAL_AMP && y > midVal - GOAL_AMP) {
-        reachedAmp = false;
-      }
-
-      if (y < midVal - GOAL_AMP) {
-        if (!reachedAmp) {
-          COUNT += 1;
-          reachedAmp = true;
-        }
-      }
-
-      colorMode(HSB);
-      if (ang != undefined) {
-        path.addPoint(x, y);
-        path.display();
-      }
-
-      // increment point x and y
-      y = - (ang - 90) * SENSITIVITY + midVal; // ang mapping
-      x = x + SPEED;
-
-      if (x > window.innerWidth) {
-        showResults(COUNT);
-        noLoop();
-      }
-    }
-
-  }
-
-}
-
-function reset() {
-  background("#F4705F");
-
-  colorMode(HSB, 360, 100, 100);
-  path = new Path();
-
-  // initialize point data
-  y = midVal;
-  x = 0;
-
-  COUNT = 0;
-  frameCount = 0;
-  funcPoints = [];
-  startDraw = false;
-  drawGrid = false;
-  loop();
-}
-
-// shows results page
-function showResults(count) {
-  background('rgba(0,0,0, 0.3)');
-  fill("white");
-  textAlign(CENTER);
-  textSize(20);
-  text("YOU'VE REACH THE AMPLITUDE", width / 2, height / 2 - 100);
-  textSize(100);
-  text(count, width / 2, height / 2);
-  textSize(20);
-  text("TIMES", width / 2, height / 2 + 40);
-}
-
-// draws each countdown page
-function drawingCount(num) {
-  clear();
-  background("#F4705F");
+// <------------- DRAWING FUNCTIONS -------------> //
+function initGame() {
+  background(backgroundColor);
   drawingGrid();
-  background('rgba(0,0,0, 0.3)');
+
+  // instruction box
+  rectMode(CENTER);
+  fill(255);
+  stroke(0);
+  strokeWeight(5);
+  rect(width / 2, height / 2, width * 0.6, height * 0.4, 10, 10, 10, 10);
+  
+  // text
+  noStroke();
   textAlign(CENTER);
-  textSize(100);
-  text(num, width / 2, height / 2);
+  textSize(30);
+  fill(0);
+  text("Instructions:", width / 2, height / 2 - 50);
+  text("Figure out how to draw green the whole time!", width / 2, height / 2);
+  textSize(20);
+  text("(click anywhere to start)", width / 2, height / 2 + 75);
 }
 
-// if the user cliccks begin the game
+function playGame() {
+
+  if (frameCount <= 50) {
+    drawingCount("3");
+  } else if (frameCount > 50 && frameCount <= 100) {
+    drawingCount("2");
+  } else if (frameCount > 100 && frameCount <= 150) {
+    drawingCount("1");
+  } else {
+    clear();
+    background(backgroundColor);
+    drawingGrid();
+    startDraw = true;
+  }
+
+  if (startDraw) {
+    if (y > ampBelow) {
+      if (!reachedAmp) {
+        ampCount += 1;
+        reachedAmp = true;
+      }
+    }
+  
+    if (y < ampBelow && y > ampAbove) {
+      reachedAmp = false;
+    }
+  
+    if (y < ampAbove) {
+      if (!reachedAmp) {
+        ampCount += 1;
+        reachedAmp = true;
+      }
+    }
+    // sound adjustment - target amps are +/- one octave from middle C (x-axis)
+    let freq = map(y, ampAbove, ampBelow, highC, lowerC);
+    playerOsc.freq(freq);
+  
+    // add sensor val to path object
+    if (ang != undefined) {
+      path.addPoint(x, y);
+      path.display();
+    }
+  
+    // check if game should end
+    if (x > width) {
+      clear();
+      frameCount = 0;
+      noLoop();
+      playerOsc.stop();
+  
+      endScreen(ampCount);
+    }
+  
+    // increment point - angle based
+    y = - (ang - 90) * SENSITIVITY + midVal; 
+    x = x + SPEED;
+  }
+}
+
+// <------------- HELPER FUNCTIONS FOR DRAWING -------------> //
+
 function mousePressed() {
   if (gameScreen == 0) {
     startGame();
   }
 }
 
-// start the countdown
 function startGame() {
   gameScreen = 1;
   frameCount = 0;
 }
 
-// first screen
-function initGame() {
-  background("#F4705F");
-  drawingGrid();
-  background('rgba(0,0,0, 0.2)');
-  textAlign(CENTER);
-  textSize(30);
-  fill(255);
-  text("See how much green can you find on the screen!", width / 2, height / 2 - 100);
-  textSize(20);
-  text("(click anywhere to start)", width / 2, height / 2);
-}
-
-// draws grid
 function drawingGrid() {
-  colorMode(HSB);
-  var yBelow = midVal + GOAL_AMP;
-  var yAbove = midVal - GOAL_AMP;
+  // set pen
+  stroke(255, 0.5);
+  strokeWeight(3);
 
-  stroke(115, 100, 100);
+  // draw vertical grid lines
+  for (let i = 0; i < width; i += gridIncrement) {
+    line(i, 0, i, height);
+  }
+
+  // draw horiz. grid lines
+  for (let i = 0; i < height; i += gridIncrement) {
+    line(0, i, width, i);
+  }
+
+  // draw mid line
+  stroke(255, 1);
   strokeWeight(5);
-  line(0, yBelow, width, yBelow);
+  line(0, midVal, width, midVal);
 
-  stroke(115, 100, 100);
+  // draw goal amp lines
+  let yAbove = midVal + GOAL_AMP * gridIncrement;
+  let yBelow = midVal - GOAL_AMP * gridIncrement;
+
+  stroke(goalColor);
   strokeWeight(5);
   line(0, yAbove, width, yAbove);
+  line(0, yBelow, width, yBelow);
 
-  colorMode(RGB);
-  stroke(255, 50);
-  strokeWeight(2);
-  for (let i = 0; i < width; i += interval) {
-    line(i, 80, i, height);
-  }
-  for (let j = 80; j < height; j += interval) {
-    line(0, j, width, j);
-  }
+  noStroke();
+}
 
-  stroke(255);
-  strokeWeight(8);
+function drawingCount(num) {
+  clear();
+  background(backgroundColor);
+  drawingGrid();
 
-  line(0, midVal, width, midVal);
+  // draw number
+  fill(0);
+  textAlign(CENTER);
+  textSize(100);
+  text(num, width / 2, height / 2 - 100);
+}
+
+function endScreen(ampCount) {
+  background(backgroundColor);
+  drawingGrid();
+  path.display();
 
   noStroke();
   fill('white');
   textSize(20);
-  textAlign(LEFT);
-  xVal = 0;
-  yVal = 0;
-  for (let i = 0; i < width - interval; i += interval * 2) {
-    text(xVal, i, midVal + 25);
-    xVal += 2;
-  }
-  for (let j = 80 + interval; j < height; j += interval * 2) {
-    text(-yVal + 2, width / 2 + 5, j - 10);
-    yVal += 2;
-  }
-
-}
-
-function calcDistanceFromAmp(x, y) {
-  var yBelow = midVal + GOAL_AMP;
-  var yAbove = midVal - GOAL_AMP;
-  if (y < midVal) {
-    return dist(x, y, x, yAbove);
-  }
-  return dist(x, y, x, yBelow);
-}
-
-class Path {
-  constructor() {
-    this.pts = [];
-    this.size = BRUSH_SIZE; // size of brush
-    this.spacing = 0.4; // spacing between points; lower value gives you smoother path, but frame rate will drop
-    this.hue = 150; // start value
-    this.hues = []; // keep track of the hues for each point
-  }
-
-  get lastPt() {
-    return this.pts[this.pts.length - 1];
-  }
-
-  addPoint(x, y) {
-    if (this.pts.length < 1) {
-      this.pts.push(new p5.Vector(x, y));
-      this.hues.push(this.hue);
-      return;
-    }
-
-    const nextPt = new p5.Vector(x, y);
-    let d = p5.Vector.dist(nextPt, this.lastPt);
-
-    while (d > this.spacing) {
-      const diff = p5.Vector.sub(nextPt, this.lastPt);
-      diff.normalize();
-      diff.mult(this.spacing)
-      this.pts.push(p5.Vector.add(this.lastPt, diff));
-      d -= this.spacing;
-
-      let distance = calcDistanceFromAmp(x, y);
-
-      if (distance > 50) {
-        this.hue = 0;
-      } else {
-        this.hue = 100 - (distance * 2);
-      }
-
-      this.hues.push(this.hue);
-    }
-  }
-
-  display() {
-    noStroke()
-    for (let i = 0; i < this.pts.length; i++) {
-      const p = this.pts[i];
-      fill(115, this.hues[i], 100);
-      ellipse(p.x, p.y, this.size, this.size);
-    }
-  }
+  textAlign(CENTER);
+  text("You found green " + ampCount + " times!", width / 2, 100);
 }

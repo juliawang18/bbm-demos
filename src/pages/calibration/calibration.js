@@ -1,6 +1,6 @@
 // CONSTANTS TO CHANGE //
 let portName = "/dev/tty.usbmodem14201";
-let SPEED = 2;
+let SPEED = 3;
 let SENSITIVITY = 7;
 let BRUSH_SIZE = 20;
 let GOAL_FREQ = 6;
