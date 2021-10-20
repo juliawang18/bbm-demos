@@ -36,6 +36,8 @@ let startPos;
 let maxFuncVal;
 let minFuncal;
 
+let pointsToSave = [];
+
 // function being matched
 function func(x) {
   return sin(x);
@@ -77,12 +79,12 @@ function setup() {
 
   // start sound
   playerOsc = new p5.SinOsc();
-  playerOsc.start();
-  playerOsc.freq(middleC);
+  // playerOsc.start();
+  // playerOsc.freq(middleC);
 
   functionOsc = new p5.SinOsc();
-  playerOsc.start();
-  playerOsc.freq(lowerC);
+  // playerOsc.start();
+  // playerOsc.freq(lowerC);
 }
 
 function draw() {
@@ -207,13 +209,14 @@ function playGame() {
     }
 
     // sound adjustment - function is base tone, haromny only when overlapping
-    let offset = abs(funcPoints[x] - y);
-    let offSetFreq = map(offset, 0, 500, 0, highC - middleC);
-    playerOsc.freq(middleC + offSetFreq);
-    functionOsc.freq(lowerC);
+    // let offset = abs(funcPoints[x] - y);
+    // let offSetFreq = map(offset, 0, 500, 0, highC - middleC);
+    // playerOsc.freq(middleC + offSetFreq);
+    // functionOsc.freq(lowerC);
 
     // add sensor val to path object
     if (ang != undefined) {
+      pointsToSave.push([x,y]);
       path.addPoint(x, y);
       path.display();
     }
@@ -223,8 +226,10 @@ function playGame() {
       clear();
       frameCount = 0;
       noLoop();
-      playerOsc.stop();
-      functionOsc.stop();
+      // playerOsc.stop();
+      // functionOsc.stop();
+
+      save(pointsToSave, "funcData.txt");
 
       let offsets = path.offsetList();
 

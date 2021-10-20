@@ -42,6 +42,8 @@ let ang;
 let x;
 let y;
 
+let pointsToSave = [];
+
 function preload() {
   // loaders
   loadColors();
@@ -77,9 +79,9 @@ function setup() {
   x = 0;
 
   // start sound
-  playerOsc = new p5.SinOsc();
-  playerOsc.start();
-  playerOsc.freq(middleC);
+  // playerOsc = new p5.SinOsc();
+  // playerOsc.start();
+  // playerOsc.freq(middleC);
 }
 
 function draw() {
@@ -207,11 +209,12 @@ function playGame() {
       }
     }
     // sound adjustment - target amps are +/- one octave from middle C (x-axis)
-    let freq = map(y, ampAbove, ampBelow, highC, lowerC);
-    playerOsc.freq(freq);
+    // let freq = map(y, ampAbove, ampBelow, highC, lowerC);
+    // playerOsc.freq(freq);
   
     // add sensor val to path object
     if (ang != undefined) {
+      pointsToSave.push([x,y]);
       path.addPoint(x, y);
       path.display();
     }
@@ -221,7 +224,8 @@ function playGame() {
       clear();
       frameCount = 0;
       noLoop();
-      playerOsc.stop();
+      // playerOsc.stop();
+      save(pointsToSave, "ampData.txt");
   
       endScreen(ampCount);
     }
@@ -251,12 +255,12 @@ function drawingGrid() {
   strokeWeight(3);
 
   // draw vertical grid lines
-  for (let i = 0; i < width; i += gridIncrement) {
+  for (let i = gridIncrement; i < width; i += gridIncrement) {
     line(i, 0, i, height);
   }
 
   // draw horiz. grid lines
-  for (let i = 0; i < height; i += gridIncrement) {
+  for (let i = gridIncrement; i < height; i += gridIncrement) {
     line(0, i, width, i);
   }
 

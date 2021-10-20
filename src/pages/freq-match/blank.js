@@ -1,0 +1,333 @@
+// CONSTANTS TO CHANGE //
+let portName = "/dev/tty.usbmodem14201";
+let SPEED = 2;
+let SENSITIVITY = 7;
+let BRUSH_SIZE = 20;
+let GOAL_FREQ = 6;
+let SLOPE_BASED = false;
+
+// DO NOT TOUCH BELOW //
+let serial;
+let latestData = "waiting for data";  // you'll use this to write incoming data to the canvas
+let funcPoints = {};
+let gameScreen = 0;
+let startDraw = false;
+let drawGrid = false;
+let isPositive;
+let fromZero = true;
+let FREQ = 0;
+let goalPeriodLength = window.innerWidth / GOAL_FREQ;
+let path;
+let ang;            // Angle
+let rad;            // Angle in radians
+let x;              // XPos of drawing dot
+let y;              // YPos of drawing dot
+let interval;
+let midVal;
+let period = [];
+let periods = [];
+
+function setup() {
+    createCanvas(window.innerWidth, window.innerHeight);
+    background("#ECECEC");
+    interval = window.innerWidth / 12;
+    midVal = floor(floor(window.innerHeight / interval) / 2) * interval + 80;
+
+    colorMode(HSB, 360, 100, 100);
+    path = new Path();
+
+    // Instantiate our SerialPort object
+    serial = new p5.SerialPort();
+    serial.list(); // list ports
+    let options = { baudRate: 115200 };
+    serial.open(portName, options);
+    serial.on('connected', serverConnected);
+    serial.on('list', gotList);
+    serial.on('data', gotData);
+    serial.on('error', gotError);
+    serial.on('open', gotOpen);
+    serial.on('close', gotClose);
+
+    // initialize point data
+    y = midVal;
+    x = 0;
+}
+
+// We are connected and ready to go
+function serverConnected() {
+    print("Connected to Server");
+}
+
+// Got the list of ports
+function gotList(thelist) {
+    print("List of Serial Ports:");
+    // theList is an array of their names
+    for (let i = 0; i < thelist.length; i++) {
+        // Display in the console
+        print(i + " " + thelist[i]);
+    }
+}
+
+// Connected to our serial device
+function gotOpen() {
+    print("Serial Port is Open");
+}
+
+function gotClose() {
+    print("Serial Port is Closed");
+    latestData = "Serial Port is Closed";
+}
+
+// Ut oh, here is an error, let's log it
+function gotError(theerror) {
+    print(theerror);
+}
+
+// There is data available to work with from the serial port
+function gotData() {
+    let incomingAngle = serial.readStringUntil('\n');  // read the incoming string 
+    if (!incomingAngle) return;             // if the string is empty, do no more
+    incomingAngle = float(incomingAngle);
+
+    if (SLOPE_BASED) {
+        ang = float(incomingAngle) + 90;
+    } else {
+        if (incomingAngle > 0) {
+            ang = incomingAngle - 90;
+          } else {
+            ang = 270 + incomingAngle;
+          }
+    }
+}
+
+function draw() {
+    
+    if (gameScreen == 0) {
+        initGame();
+
+    } else if (gameScreen == 1) {
+
+        if (frameCount == 50) {
+            drawingCount("3");
+        } else if (frameCount == 100) {
+            drawingCount("2");
+        } else if (frameCount == 150) {
+            drawingCount("1");
+        } else if (frameCount > 200) {
+            startDraw = true;
+            drawGrid = true;
+        }
+
+        if (startDraw) {
+            if (drawGrid == true) {
+                background("#ECECEC");
+                drawingGrid();
+                drawGrid = false;
+            }
+
+            if (ang != undefined) {
+                colorMode(HSB);
+                path.addPoint(x, y);
+                displayPeriods(periods);
+                path.display();
+            }
+
+            if (y > midVal + 5) {
+                if (!isPositive || fromZero) {
+                    FREQ += 1;
+                    isPositive = true;
+                    if (fromZero) {
+                        period.push(0);
+                    } else {
+                        period.push(x);
+                    }
+                    fromZero = false;
+                }
+            }
+
+            if (y < midVal - 5) {
+                if (isPositive || fromZero) {
+                    FREQ += 1;
+                    isPositive = false;
+                    if (fromZero) {
+                        period.push(0);
+                    } else {
+                        period.push(x);
+                    }
+                    fromZero = false;
+                }
+            }
+
+            if (period.length == 3) {
+                p = sort(period, 3);
+                periods.push(p);
+                period = [];
+                period.push(p[2]);
+            }
+
+            if (x > window.innerWidth) {
+                showResults(FREQ / 2);
+                noLoop();
+            }
+
+            if (SLOPE_BASED) {
+                rad = (ang / 180) * PI; // slope mapping
+                y = y + SPEED * cos(rad) / sin(rad) * SENSITIVITY;
+                x = x + SPEED;
+            } else {
+                y = - (ang - 90) * SENSITIVITY + midVal; // ang mapping
+                x = x + SPEED;
+            }
+        }
+
+
+    }
+}
+
+function mousePressed() {
+    // if we are on the initial screen when clicked, start the game
+    if (gameScreen == 0) {
+        startGame();
+    }
+}
+
+function startGame() {
+    gameScreen = 1;
+    frameCount = 0;
+}
+
+function displayPeriods(periods) {
+    colorMode(HSB);
+    for (let i = 0; i < periods.length; i++) {
+        p = periods[i]
+        w = p[2] - p[0];
+        dist = abs(goalPeriodLength - w);
+        fill(115 - dist, 82, 82, 0.5);
+        rect(p[0], 80, w, window.innerHeight - 80);
+    }
+}
+
+function reset() {
+    background("#ECECEC");
+
+    path = new Path();
+
+    // initialize point data
+    y = height / 2;
+    x = 0;
+
+    COUNT = 0;
+    FREQ = 0;
+    frameCount = 0;
+    funcPoints = [];
+    startDraw = false;
+    drawGrid = false;
+    fromZero = true;
+    periods = [];
+    period = [];
+    loop();
+}
+
+function showResults(count) {
+    background('rgba(0,0,0, 0.2)');
+    fill(255);
+    textAlign(CENTER);
+    textSize(100);
+    text(count - 0.5, width / 2, window.innerHeight - 230);
+    textSize(20);
+    text("FULL CYCLES PER SCREEN!", width / 2, window.innerHeight - 180);
+}
+
+function drawingCount(num) {
+    clear();
+    background("#ECECEC");
+    drawingGrid();
+    background('rgba(0,0,0, 0.2)');
+    textAlign(CENTER);
+    textSize(100);
+    text(num, width / 2, height / 2);
+    textSize(30);
+    fill(100);
+    text("Goal: " + GOAL_FREQ + " cycles per screen!", width / 2, height / 2 - 100);
+}
+
+function initGame() {
+    background("#ECECEC");
+    drawingGrid();
+    background('rgba(0,0,0, 0.2)');
+    textAlign(CENTER);
+    textSize(30);
+    fill(50);
+    text("Try to make the whole screen green!", width / 2, height / 2 - 100);
+    textSize(20);
+    text("(click anywhere to start)", width / 2, height / 2);
+}
+
+function drawingGrid() {
+    colorMode(RGB);
+    stroke(150, 50);
+    strokeWeight(2);
+    for (let i = 0; i < width; i += interval) {
+        line(i, 80, i, height);
+    }
+    for (let j = 80; j < height; j += interval) {
+        line(0, j, width, j);
+    }
+
+    stroke(200);
+    strokeWeight(8);
+
+    line(0, midVal, width, midVal);
+
+    noStroke();
+    fill(150);
+    textSize(20);
+    textAlign(LEFT);
+    xVal = 0;
+    yVal = 0;
+    for (let i = 0; i < width - interval; i += interval * 2) {
+        text(xVal, i + 5, midVal + 25);
+        xVal += 2;
+    }
+
+}
+
+class Path {
+    constructor() {
+        this.pts = [];
+        this.size = BRUSH_SIZE; // size of brush
+        this.spacing = 1; // spacing between points; lower value gives you smoother path, but frame rate will drop
+    }
+
+    get lastPt() {
+        return this.pts[this.pts.length - 1];
+    }
+
+    addPoint(x, y) {
+        if (this.pts.length < 1) {
+            this.pts.push(new p5.Vector(x, y));
+            return;
+        }
+
+        const nextPt = new p5.Vector(x, y);
+        let d = p5.Vector.dist(nextPt, this.lastPt);
+
+        while (d > this.spacing) {
+            const diff = p5.Vector.sub(nextPt, this.lastPt);
+            diff.normalize();
+            diff.mult(this.spacing)
+            this.pts.push(p5.Vector.add(this.lastPt, diff));
+            d -= this.spacing;
+        }
+    }
+
+    display() {
+        noStroke();
+        colorMode(RGB);
+        for (let i = 0; i < this.pts.length; i++) {
+            const p = this.pts[i];
+            fill(255);
+            ellipse(p.x, p.y, this.size, this.size);
+        }
+    }
+}
