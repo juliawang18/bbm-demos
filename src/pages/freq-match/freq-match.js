@@ -1,10 +1,10 @@
 // <------- CONSTANTS TO CHANGE -------> //
 let portName = "/dev/tty.usbmodem142101";
-let SPEED = 5;
+let SPEED = 3;
 let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
 let GOAL_FREQ = 6;
-let GRID_SIZE = 11;
+let GRID_SIZE = 12;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
@@ -84,8 +84,8 @@ function setup() {
 
   // start sound
   playerOsc = new p5.SinOsc();
-//   playerOsc.start();
-//   playerOsc.freq(middleC);
+  playerOsc.start();
+  playerOsc.freq(middleC);
 }
 
 function draw() {
@@ -218,8 +218,8 @@ function playGame() {
     }
 
     // sound adjustment - target amps are +/- one octave from middle C (x-axis)
-    // let freq = map(y, ampAbove, ampBelow, highC, lowerC);
-    // playerOsc.freq(freq);
+    let freq = map(y, 0, height, highC, lowerC);
+    playerOsc.freq(freq);
   
     // add sensor val to path object
     if (ang != undefined) {
@@ -236,7 +236,7 @@ function playGame() {
       noLoop();
 
       save(pointsToSave, "freqData.txt");
-    //   playerOsc.stop();
+      playerOsc.stop();
   
       endScreen(cycleCount);
     }

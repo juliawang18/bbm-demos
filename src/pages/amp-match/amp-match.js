@@ -1,10 +1,10 @@
 // <------- CONSTANTS TO CHANGE -------> //
 let portName = "/dev/tty.usbmodem142101";
-let SPEED = 5;
+let SPEED = 10;
 let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
 let GOAL_AMP = 2;
-let GRID_SIZE = 11;
+let GRID_SIZE = 12;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
@@ -79,9 +79,9 @@ function setup() {
   x = 0;
 
   // start sound
-  // playerOsc = new p5.SinOsc();
-  // playerOsc.start();
-  // playerOsc.freq(middleC);
+  playerOsc = new p5.SinOsc();
+  playerOsc.start();
+  playerOsc.freq(middleC);
 }
 
 function draw() {
@@ -211,6 +211,8 @@ function playGame() {
     // sound adjustment - target amps are +/- one octave from middle C (x-axis)
     // let freq = map(y, ampAbove, ampBelow, highC, lowerC);
     // playerOsc.freq(freq);
+    let freq = map(y, 0, height, highC, lowerC);
+    playerOsc.freq(freq);
   
     // add sensor val to path object
     if (ang != undefined) {
@@ -224,7 +226,7 @@ function playGame() {
       clear();
       frameCount = 0;
       noLoop();
-      // playerOsc.stop();
+      playerOsc.stop();
       save(pointsToSave, "ampData.txt");
   
       endScreen(ampCount);
@@ -270,13 +272,13 @@ function drawingGrid() {
   line(0, midVal, width, midVal);
 
   // draw goal amp lines
-  let yAbove = midVal + GOAL_AMP * gridIncrement;
-  let yBelow = midVal - GOAL_AMP * gridIncrement;
+  // let yAbove = midVal + GOAL_AMP * gridIncrement;
+  // let yBelow = midVal - GOAL_AMP * gridIncrement;
 
   stroke(goalColor);
   strokeWeight(5);
-  line(0, yAbove, width, yAbove);
-  line(0, yBelow, width, yBelow);
+  line(0, ampAbove, width, ampAbove);
+  line(0, ampBelow, width, ampBelow);
 
   noStroke();
 }

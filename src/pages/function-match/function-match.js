@@ -1,6 +1,6 @@
 // <------- CONSTANTS TO CHANGE -------> //
 let portName = "/dev/tty.usbmodem142101";
-let SPEED = 5;
+let SPEED = 6;
 let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
 let TOLERANCE = 40;
@@ -79,12 +79,12 @@ function setup() {
 
   // start sound
   playerOsc = new p5.SinOsc();
-  // playerOsc.start();
-  // playerOsc.freq(middleC);
+  playerOsc.start();
+  playerOsc.freq(middleC);
 
   functionOsc = new p5.SinOsc();
-  // playerOsc.start();
-  // playerOsc.freq(lowerC);
+  playerOsc.start();
+  playerOsc.freq(lowerC);
 }
 
 function draw() {
@@ -209,10 +209,10 @@ function playGame() {
     }
 
     // sound adjustment - function is base tone, haromny only when overlapping
-    // let offset = abs(funcPoints[x] - y);
-    // let offSetFreq = map(offset, 0, 500, 0, highC - middleC);
-    // playerOsc.freq(middleC + offSetFreq);
-    // functionOsc.freq(lowerC);
+    let offset = abs(funcPoints[x] - y);
+    let offSetFreq = map(offset, 0, 500, 0, highC - middleC);
+    playerOsc.freq(middleC + offSetFreq);
+    functionOsc.freq(lowerC);
 
     // add sensor val to path object
     if (ang != undefined) {
@@ -226,8 +226,8 @@ function playGame() {
       clear();
       frameCount = 0;
       noLoop();
-      // playerOsc.stop();
-      // functionOsc.stop();
+      playerOsc.stop();
+      functionOsc.stop();
 
       save(pointsToSave, "funcData.txt");
 

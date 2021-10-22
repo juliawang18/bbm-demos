@@ -4,7 +4,7 @@ let SPEED = 5;
 let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
 let GOAL_FREQ = 2;
-let GRID_SIZE = 11;
+let GRID_SIZE = 12;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
@@ -226,7 +226,7 @@ function startGame() {
 
 function drawingGrid() {
   // set pen
-  stroke(255, 0.15);
+  stroke(255, 0.4);
   strokeWeight(3);
 
   // draw vertical grid lines
