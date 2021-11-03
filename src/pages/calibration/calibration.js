@@ -1,262 +1,260 @@
-// CONSTANTS TO CHANGE //
-let portName = "/dev/tty.usbmodem14201";
-let SPEED = 2;
-let SENSITIVITY = 7;
+// <------- CONSTANTS TO CHANGE -------> //
+let portName = "/dev/tty.usbmodem142101";
+let SPEED = 5;
+let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
-let GOAL_FREQ = 6;
-let SLOPE_BASED = false;
+let GOAL_FREQ = 2;
+let GRID_SIZE = 12;
 
-// DO NOT TOUCH BELOW //
+// <------- DO NOT TOUCH BELOW -------> //
+
+// serial communication
 let serial;
-let latestData = "waiting for data";  // you'll use this to write incoming data to the canvas
-let funcPoints = {};
+let latestData = "waiting for data";  
+
+// declare styles
+let backgroundColor;
+let goalColor;
+let font;
+
+// declare sounds
+let playerOsc;
+
+// notes
+let highC = 523.251;
+let middleC = 261.63;
+let lowerC = 130.813;
+
+// global vars
+let gameScreen;
 let startDraw = false;
-let drawGrid = false;
-let isPositive;
-let fromZero = true;
-let FREQ = 0;
-let goalPeriodLength = window.innerWidth/GOAL_FREQ;
-let path;
-let ang;            // Angle
-let rad;            // Angle in radians
-let x;              // XPos of drawing dot
-let y;              // YPos of drawing dot
-let interval;
+
+let freqCount = 0;
+
+let gridIncrement;
 let midVal;
-let period = [];
-let periods = [];
+
+let path;
+
+let ang;
+let x;
+let y;
+
+let pointsToSave = [];
+
+function preload() {
+  // loaders
+  loadColors();
+  loadFonts();
+}
 
 function setup() {
-    createCanvas(window.innerWidth, window.innerHeight);
-    background("#ECECEC");
-    interval = window.innerWidth/12;
-    midVal = floor(floor(window.innerHeight / interval) / 2) * interval + 80;
+  // visual setup
+  createCanvas(window.innerWidth, window.innerHeight);
+  background(backgroundColor);
+  textFont(font);
 
-    colorMode(HSB, 360, 100, 100);
-    path = new Path();
+  // Instantiate our SerialPort object
+  serial = new p5.SerialPort();
+  serial.list();
+  let options = { baudRate: 115200 }; // change the data rate to whatever you wish
+  serial.open(portName, options);
+  serial.on('connected', serverConnected);
+  serial.on('list', gotList);
+  serial.on('data', gotData);
+  serial.on('error', gotError);
+  serial.on('open', gotOpen);
+  serial.on('close', gotClose);
 
-    // Instantiate our SerialPort object
-    serial = new p5.SerialPort();
-    serial.list(); // list ports
-    let options = { baudRate: 115200 };
-    serial.open(portName, options);
-    serial.on('connected', serverConnected);
-    serial.on('list', gotList);
-    serial.on('data', gotData);
-    serial.on('error', gotError);
-    serial.on('open', gotOpen);
-    serial.on('close', gotClose);
+  // initialize data
+  gameScreen = 0;
+  gridIncrement = width / GRID_SIZE;
+  midVal = floor((height / gridIncrement) / 2) * gridIncrement;
+  path = new Path(BRUSH_SIZE);
+  y = height / 2;
+  x = 0;
 
-    var button = createButton("restart");
-    button.mousePressed(reset);
-    button.style('position', "absolute");
-    button.style('right', "10px");
-    button.style('top', "10px");
-    button.style('background-color', "#0055FF");
-    button.style('border-radius', "50px");
-    button.style('border', "none");
-    button.style('color', "white");
-    button.style('width', "100px");
-    button.style('margin', "auto");
-    button.style('padding', "20px");
-    button.style('cursor', "pointer");
-    button.style('text-align', "center");
-    button.style('font-size', "16px");
-    button.style('font-family', "'Quicksand', san-serif");
-
-    // initialize point data
-    y = midVal;
-    x = 0;
-}
-
-// We are connected and ready to go
-function serverConnected() {
-    print("Connected to Server");
-}
-
-// Got the list of ports
-function gotList(thelist) {
-    print("List of Serial Ports:");
-    // theList is an array of their names
-    for (let i = 0; i < thelist.length; i++) {
-        // Display in the console
-        print(i + " " + thelist[i]);
-    }
-}
-
-// Connected to our serial device
-function gotOpen() {
-    print("Serial Port is Open");
-}
-
-function gotClose() {
-    print("Serial Port is Closed");
-    latestData = "Serial Port is Closed";
-}
-
-// Ut oh, here is an error, let's log it
-function gotError(theerror) {
-    print(theerror);
-}
-
-// There is data available to work with from the serial port
-function gotData() {
-    let incomingAngle = serial.readStringUntil('\n');  // read the incoming string 
-    if (!incomingAngle) return;             // if the string is empty, do no more
-    incomingAngle = float(incomingAngle);
-
-    if (SLOPE_BASED) {
-        ang = float(incomingAngle) + 90;
-    } else {
-        if (incomingAngle > 0) {
-            ang = incomingAngle - 90;
-          } else {
-            ang = 270 + incomingAngle;
-          }
-    }
+  // start sound
+  playerOsc = new p5.SinOsc();
+//   playerOsc.start();
+//   playerOsc.freq(middleC);
 }
 
 function draw() {
-    textSize(50);
-    textAlign(CENTER);
-    noStroke();
-    fill('white');
-
-    if (frameCount == 50) {
-        drawingCount("3");
-    } else if (frameCount == 100) {
-        drawingCount("2");
-    } else if (frameCount == 150) {
-        drawingCount("1");
-    } else if (frameCount > 200) {
-        startDraw = true;
-        drawGrid = true;
-    }
-
-    if (startDraw) {
-        if (drawGrid == true) {
-            background("#ECECEC");
-            drawingGrid();
-            drawGrid = false;
-        }
-
-        if (ang != undefined) {
-            colorMode(HSB);
-            path.addPoint(x, y);
-            path.display();
-        }
-
-        if (x > window.innerWidth) {
-            noLoop();
-        }
-
-        if (SLOPE_BASED) {
-            rad = (ang / 180) * PI; // slope mapping
-            y = y + SPEED * cos(rad) / sin(rad) * SENSITIVITY;
-            x = x + SPEED;
-        } else {
-            y = - (ang - 90) * SENSITIVITY + midVal; // ang mapping
-            x = x + SPEED;
-        }
-    }
+  background(backgroundColor);
+  
+  if (gameScreen == 0) {
+    initGame();
+  } else if (gameScreen == 1) {
+    playGame();
+  }
 
 }
 
-function reset() {
-    background("#ECECEC");
-
-    path = new Path();
-
-    // initialize point data
-    y = height / 2;
-    x = 0;
-
-    COUNT = 0;
-    frameCount = 0;
-    funcPoints = [];
-    startDraw = false;
-    drawGrid = false;
-    fromZero = true;
-    periods = [];
-    period = [];
-    loop();
+// <------------- PRELOAD FUNCTIONS -------------> //
+// load colors 
+function loadColors() {
+  colorMode(HSB, 360, 100, 100);
+  backgroundColor = color(0, 0, 20);
 }
 
-function drawingCount(num) {
+// load fonts 
+function loadFonts() {
+  font = loadFont("../../assets/fonts/Whyte-Medium.otf");
+}
+
+// <------------- SETUP FUNCTIONS -------------> //
+// we are connected and ready to go
+function serverConnected() {
+  print("Connected to Server");
+}
+
+// got the list of ports
+function gotList(thelist) {
+  print("List of Serial Ports:");
+  for (let i = 0; i < thelist.length; i++) {
+    print(i + " " + thelist[i]);
+  }
+}
+
+// connected to our serial device
+function gotOpen() {
+  print("Serial Port is Open");
+}
+
+function gotClose() {
+  print("Serial Port is Closed");
+  latestData = "Serial Port is Closed";
+}
+
+// if there is an error, log it
+function gotError(theerror) {
+  print(theerror);
+}
+
+// there is data available to work with from the serial port
+function gotData() {
+  let incomingAngle = serial.readStringUntil('\n'); 
+  if (!incomingAngle) return;           
+  incomingAngle = float(incomingAngle);
+
+  // altering incoming angle val to fit interaction
+  // if (incomingAngle > 0) {
+  //   ang = incomingAngle - 90;
+  // } else {
+  //   ang = 270 + incomingAngle;
+  // }
+  ang = incomingAngle + 90;
+}
+
+// <------------- DRAWING FUNCTIONS -------------> //
+function initGame() {
+  background(backgroundColor);
+  drawingGrid();
+
+  // instruction box
+  rectMode(CENTER);
+  fill(255);
+  stroke(0);
+  strokeWeight(5);
+  rect(width / 2, height / 2, width * 0.6, height * 0.4, 10, 10, 10, 10);
+  
+  // text
+  noStroke();
+  textAlign(CENTER);
+  textSize(30);
+  fill(0);
+  text("Get used to rocking!", width / 2, height / 2 - 25);
+  textSize(20);
+  text("(click anywhere to start)", width / 2, height / 2 + 75);
+}
+
+function playGame() {
+
+  if (frameCount <= 50) {
+    drawingCount("3");
+  } else if (frameCount > 50 && frameCount <= 100) {
+    drawingCount("2");
+  } else if (frameCount > 100 && frameCount <= 150) {
+    drawingCount("1");
+  } else {
     clear();
-    background("#ECECEC");
+    background(backgroundColor);
     drawingGrid();
-    background('rgba(0,0,0, 0.3)');
-    textAlign(CENTER);
-    textSize(100);
-    text(num, width / 2, height / 2);
+    startDraw = true;
+  }
+
+  if (startDraw) {
+    // sound adjustment - target amps are +/- one octave from middle C (x-axis)
+    // let freq = map(y, ampAbove, ampBelow, highC, lowerC);
+    // playerOsc.freq(freq);
+  
+    // add sensor val to path object
+    if (ang != undefined) {
+      pointsToSave.push([x,y]);
+      path.addPoint(x, y);
+      path.display();
+    }
+  
+    // check if game should end
+    if (x > width) {
+      frameCount = 0;
+      noLoop();
+
+      save(pointsToSave, "calibration.txt");
+    //   playerOsc.stop();
+    }
+  
+    // increment point - angle based
+    y = - (ang - 90) * SENSITIVITY + midVal; 
+    x = x + SPEED;
+  }
+}
+
+// <------------- HELPER FUNCTIONS FOR DRAWING -------------> //
+
+function mousePressed() {
+  if (gameScreen == 0) {
+    startGame();
+  }
+}
+
+function startGame() {
+  gameScreen = 1;
+  frameCount = 0;
 }
 
 function drawingGrid() {
-    colorMode(RGB);
-    stroke(150, 50);
-    strokeWeight(2);
-    for (let i = 0; i < width; i += interval) {
-      line(i, 80, i, height);
-    }
-    for (let j = 80; j < height; j += interval) {
-      line(0, j, width, j);
-    }
-  
-    stroke(200);
-    strokeWeight(8);
-  
-    line(0, midVal, width, midVal);
-  
-    noStroke();
-    fill(150);
-    textSize(20);
-    textAlign(LEFT);
-    xVal = 0;
-    yVal = 0;
-    for (let i = 0; i < width - interval; i += interval*2) {
-      text(xVal, i + 5, midVal + 25);
-      xVal += 2;
-    }
-  
+  // set pen
+  stroke(255, 0.4);
+  strokeWeight(3);
+
+  // draw vertical grid lines
+  for (let i = gridIncrement; i < width; i += gridIncrement) {
+    line(i, 0, i, height);
+  }
+
+  // draw horiz. grid lines
+  for (let i = gridIncrement; i < height; i += gridIncrement) {
+    line(0, i, width, i);
+  }
+
+  // draw mid line
+  stroke(255, 1);
+  strokeWeight(5);
+  line(0, midVal, width, midVal);
+
+  noStroke();
 }
 
-class Path {
-    constructor() {
-        this.pts = [];
-        this.size = BRUSH_SIZE; // size of brush
-        this.spacing = 1; // spacing between points; lower value gives you smoother path, but frame rate will drop
-    }
+function drawingCount(num) {
+  clear();
+  background(backgroundColor);
+  drawingGrid();
 
-    get lastPt() {
-        return this.pts[this.pts.length - 1];
-    }
-
-    addPoint(x, y) {
-        if (this.pts.length < 1) {
-            this.pts.push(new p5.Vector(x, y));
-            return;
-        }
-
-        const nextPt = new p5.Vector(x, y);
-        let d = p5.Vector.dist(nextPt, this.lastPt);
-
-        while (d > this.spacing) {
-            const diff = p5.Vector.sub(nextPt, this.lastPt);
-            diff.normalize();
-            diff.mult(this.spacing)
-            this.pts.push(p5.Vector.add(this.lastPt, diff));
-            d -= this.spacing;
-        }
-    }
-
-    display() {
-        noStroke();
-        colorMode(RGB);
-        for (let i = 0; i < this.pts.length; i++) {
-            const p = this.pts[i];
-            fill(150);
-            ellipse(p.x, p.y, this.size, this.size);
-        }
-    }
+  // draw number
+  fill(255);
+  textAlign(CENTER);
+  textSize(100);
+  text(num, width / 2, height / 2 - 100);
 }

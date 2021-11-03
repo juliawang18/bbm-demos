@@ -1,0 +1,83 @@
+@font-face {
+    font-family: Whyte;
+    src: local("Whyte-Medium") url(./assets/fonts/Whyte-Medium.otf) format("opentype");
+}
+
+@font-face {
+    font-family: Inter;
+    src: local("Inter-Medium") url(./assets/fonts/Inter-Medium.ttf) format("truetype");
+}
+
+html, body {
+    padding: 0;
+    margin: 0;
+}
+
+.container-home {
+    background-color: #3CA789;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.title-home {
+    font-family: Whyte;
+    font-size: 3em;
+    margin: 4em 0em 1em 0em;
+}
+
+.thumbnail-group {
+    width: 55%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.thumbnail-container {
+    width: 22%;
+}
+
+.thumbnail {
+    width: 100%;
+}
+
+.thumbnail:hover {
+    position: relative;
+    top: -2%;
+    left: -2%;
+    width: 105%;
+    height: auto;
+    display: block;
+    z-index: 999;
+}
+
+/* CSS for all activities */
+.canvas {
+    margin: 0 auto;
+}
+
+.back-button {
+    position: absolute;
+    text-decoration: none;
+    color: white;
+    background-color: rgba(255, 255, 255, 0.4);
+    width: 1.5em;
+    height: 1.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 1em;
+    font-family: Inter;
+    font-size: 2.5em;
+    top: 0.5em;
+    left: 0.5em;
+}
+
+.back-button:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+
+
+
