@@ -92,7 +92,7 @@ function draw() {
   } else if (gameScreen == 1) {
     playGame();
   }
-
+  
 }
 
 // <------------- PRELOAD FUNCTIONS -------------> //
@@ -227,7 +227,7 @@ function playGame() {
       frameCount = 0;
       noLoop();
       playerOsc.stop();
-      save(pointsToSave, "ampData.txt");
+      // save(pointsToSave, "ampData.txt");
   
       endScreen(ampCount);
     }

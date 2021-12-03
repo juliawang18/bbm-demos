@@ -14,6 +14,7 @@ class Path {
         this.tolerance = tolerance;
         this.funcPoints = funcPoints;
         this.startPos = start;
+        this.volume = 1;
     }
   
     get lastPt() {
@@ -56,9 +57,11 @@ class Path {
             let distance = calcDistance([x, this.funcPoints[x]], [x, y]);
     
             if (distance > 110) {
-            this.hue = 0;
+                this.hue = 0;
+                this.volume = 0;
             } else {
-            this.hue = 110 - distance; // for each new point, update the hue
+                this.hue = 110 - distance; // for each new point, update the hue
+                this.volume = 1 - map(distance, 0, 110, 0, 1);
             }
             this.hues.push(this.hue);
         }
