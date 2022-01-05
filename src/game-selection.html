@@ -1,0 +1,80 @@
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="index.css">
+	<script language="javascript" type="text/javascript" src="p5.js"></script>
+</head>
+
+<body class="container">
+    <a class="button back-button" href="index.html">Back</a>
+
+	<div class="inner-container">
+
+		<div class="">
+			<button class="tab-button active" onclick="openTab('one-player')">One Player</button>
+			<button class="tab-button" onclick="openTab('two-player')">Two Player</button>
+		</div>
+
+		<hr>
+	
+		<div id="one-player" class="tab">
+			<div class="thumbnail-container">
+				<a class="thumbnail-wrapper" href="./pages/one-player/function-match/index.html">
+					<img class="thumbnail" src="./assets/thumbnails/one-player/activity_one.png" alt="thumbnail">
+				</a>
+			</div>
+			<div class="thumbnail-container">
+				<a class="thumbnail-wrapper" href="./pages/one-player/amp-match/">
+					<img class="thumbnail" src="./assets/thumbnails/one-player/activity_two.png" alt="thumbnail">
+				</a>
+			</div>
+			<div class="thumbnail-container">
+				<a class="thumbnail-wrapper" href="./pages/one-player/freq-match/">
+					<img class="thumbnail" src="./assets/thumbnails/one-player/activity_three.png" alt="thumbnail">
+				</a>
+			</div>
+			<div class="thumbnail-container">
+				<a class="thumbnail-wrapper" href="./pages/one-player/calibration/">
+					<img class="thumbnail" src="./assets/thumbnails/one-player/calibration.png" alt="thumbnail">
+				</a>
+			</div>
+		</div>
+		
+		<div id="two-player" class="tab" style="display:none">
+			<div class="thumbnail-container">
+				<a class="thumbnail-wrapper" href="./pages/one-player/function-match/">
+					<img class="thumbnail" src="./assets/thumbnails/one-player/activity_one.png" alt="func_thumbnail">
+				</a>
+			</div>
+			<div class="thumbnail-container">
+				<a class="thumbnail-wrapper" href="./pages/one-player/function-match/">
+					<img class="thumbnail" src="./assets/thumbnails/one-player/activity_one.png" alt="func_thumbnail">
+				</a>
+			</div>
+			<div class="thumbnail-container">
+				<a class="thumbnail-wrapper" href="./pages/one-player/function-match/">
+					<img class="thumbnail" src="./assets/thumbnails/one-player/activity_one.png" alt="func_thumbnail">
+				</a>
+			</div>
+			<div class="thumbnail-container">
+				<a class="thumbnail-wrapper" href="./pages/one-player/function-match/">
+					<img class="thumbnail" src="./assets/thumbnails/one-player/activity_one.png" alt="func_thumbnail">
+				</a>
+			</div>
+		</div>
+	</div>
+</body>
+
+<script>
+	function openTab(playerTab) {
+	  var i;
+	  var x = document.getElementsByClassName("tab");
+	  for (i = 0; i < x.length; i++) {
+		x[i].style.display = "none";  
+	  }
+	  document.getElementById(playerTab).style.display = "flex";  
+	}
+</script>
+
+</html>
