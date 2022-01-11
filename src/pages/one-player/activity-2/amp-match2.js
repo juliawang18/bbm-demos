@@ -1,10 +1,9 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let SPEED = 30;
+let SPEED = 5;
 let SENSITIVITY = 18;
 let BRUSH_SIZE = 20;
-let GRID_SIZE = 11;
-
-let GOAL_FREQ = 2;
+let GOAL_AMP = 2;
+let GRID_SIZE = 12;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
@@ -16,23 +15,25 @@ let latestData = "waiting for data";
 //  styles
 let backgroundColor;
 let darkBackgroundColor;
+let goalColor;
 let gridColor;
-let greatColor;
-let okayColor;
-let badColor;
 let font;
 
 // global vars 
 let gameScreen;
-let startPos;
 let timer;
+
+let ampCount = 0;
 
 let gridIncrement;
 let midVal;
+let ampAbove;
+let ampBelow;
+let startPos;
 
 let ang;
 let x;
-let y;
+let y
 
 function preload() {
   loadColors();
@@ -64,9 +65,11 @@ function setup() {
   gridIncrement = width / GRID_SIZE;
   startPos = gridIncrement * 3;
   midVal = floor((height / gridIncrement) / 2) * gridIncrement;
+  ampAbove = midVal - GOAL_AMP * gridIncrement;
+  ampBelow = midVal + GOAL_AMP * gridIncrement;
 
   x = 0;
-  y = midVal;
+  y = height / 2;
 }
 
 function draw() {
@@ -74,20 +77,20 @@ function draw() {
   if (gameScreen == 0) {
     initGame();
   } else if (gameScreen == 1) {
+    initCountdown();
+  } else if (gameScreen == 2) {
     playGame();
-  } 
+  }
 
 }
 
 // <------------- PRELOAD FUNCTIONS -------------> //
 function loadColors() {
   colorMode(HSB, 360, 100, 100);
-  backgroundColor = color(16, 53, 100);
-  darkBackgroundColor = color(15, 55, 94);
-  gridColor = color(43, 13, 98);
-  greatColor = color(136, 51, 66);
-  okayColor = color(38, 75, 95);
-  badColor = color(18, 81, 91);
+  backgroundColor = color(43, 13, 98);
+  darkBackgroundColor = color(43, 23, 94); 
+  goalColor = color(155, 100, 85);
+  gridColor = color(209, 80, 38);
 }
 
 function loadFonts() {
@@ -130,12 +133,12 @@ function gotData() {
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  if (incomingAngle > 0) {
-    ang = incomingAngle - 90;
-  } else {
-    ang = 270 + incomingAngle;
-  }
-  // ang = incomingAngle + 90;
+  // if (incomingAngle > 0) {
+  //   ang = incomingAngle - 90;
+  // } else {
+  //   ang = 270 + incomingAngle;
+  // }
+  ang = incomingAngle + 90;
 }
 
 // <------------- DRAWING FUNCTIONS -------------> //
@@ -153,9 +156,28 @@ function initGame() {
   textAlign(CENTER);
   textSize(30);
   fill(backgroundColor);
-  text("Get used to rocking on the board!", width / 2, height / 4 - 20);
+  text("Figure out where green is!", width / 2, height / 4 - 20);
   textSize(20);
   text("(click anywhere to start)", width / 2, height / 4 + 30);
+}
+
+function initCountdown() {
+  drawingCountdown(timer);
+
+  // decrement timer
+  if (frameCount % 60 == 0 && timer > -1) { 
+    timer --;
+  }
+
+  if (timer == 0) {
+    drawingCountdown("Go!");
+  }
+
+  if (timer == -1) {
+    gameScreen = 2;
+    frameCount = 0;
+  }
+
 }
 
 function playGame() {
@@ -167,18 +189,15 @@ function playGame() {
   }
 
   fill(gridColor);
-
   ellipse(x, y, BRUSH_SIZE);
 
-  // end 
   if (x > width) {
     noLoop();
   }
 
-  x = x + SPEED;
+  x = x + 5;
   y = lerp(y, - (ang - 90) * SENSITIVITY + midVal, 0.05);
 
-}
 }
 
 // <------------- HELPER FUNCTIONS FOR DRAWING -------------> //
@@ -215,12 +234,8 @@ function drawGrid() {
     line(0, i, width, i);
   }
 
-  // draw line
-  strokeWeight(3);
-  line(startPos, 0, startPos, height);
-
-  // draw mid line
   setLineDash([0, 0]);
+  // draw mid line
   stroke(gridColor);
   strokeWeight(8);
   line(0, midVal, width, midVal);
@@ -230,4 +245,31 @@ function drawGrid() {
 
 function setLineDash(list) {
   drawingContext.setLineDash(list);
+}
+
+function drawingCountdown(input) {
+  background(backgroundColor);
+  drawGrid();
+
+  // draw rect
+  fill('rgba(20, 60, 98, 0.2)');
+  rectMode(CORNER);
+  rect(startPos, 0, width - startPos, height);
+
+  // draw number
+  fill(gridColor);
+  textAlign(CENTER);
+  textSize(100);
+  text(input, startPos / 2, height / 2 - 150);
+}
+
+function endScreen(ampCount) {
+  background(backgroundColor);
+  drawGrid();
+
+  noStroke();
+  fill('white');
+  textSize(20);
+  textAlign(CENTER);
+  text("You found green " + ampCount + " times!", width / 2, 100);
 }

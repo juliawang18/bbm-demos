@@ -131,6 +131,27 @@ hr {
     margin-top: 2.5em;
     display: flex;
     justify-content: space-between;
+    /* background-color: aqua; */
+}
+
+.thumbnail-group-home {
+    width: 35%;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.thumbnail-group-two {
+    width: 45%;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.thumbnail-container-home {
+    width: 40%;
+}
+
+.thumbnail-container-two {
+    width: 30%;
 }
 
 .thumbnail-container {
