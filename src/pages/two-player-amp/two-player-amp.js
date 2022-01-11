@@ -1,6 +1,6 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let portName1 = "/dev/tty.usbmodem142101";
-let portName2 = "/dev/tty.usbmodem142201";
+let portName1 = "/dev/tty.usbmodem144301";
+let portName2 = "/dev/tty.usbmodem144201";
 let SPEED = 10;
 let SENSITIVITY1 = 10;
 let SENSITIVITY2 = 10;
@@ -267,7 +267,7 @@ function playGame() {
         }
       }
     
-      if (y2 < ampBelow2 && y1 > ampAbove2) {
+      if (y2 < ampBelow2 && y2 > ampAbove2) {
         reachedAmp2 = false;
       }
     
@@ -288,11 +288,11 @@ function playGame() {
     
       // check if game should end
       if (x1 > width) {
-        // clear();
+        clear();
         frameCount = 0;
         noLoop();
     
-        // endScreen(ampCount);
+        endScreen(ampCount1, ampCount2);
       }
     
       // increment point - angle based
@@ -301,6 +301,9 @@ function playGame() {
 
       y2 = - (ang2 - 90) * SENSITIVITY2 + midVal2; 
       x2 = x2 + SPEED;
+
+      // y1 = map(y1, 0, height, 0, midVal);
+      // y2 = map(y2, 0, height, midVal, height);
     }
   }
 }
@@ -368,14 +371,17 @@ function drawingCount(num) {
   text(num, width / 2, height / 2 - 100);
 }
 
-function endScreen(ampCount) {
+function endScreen(ampCount1, ampCount2) {
   background(backgroundColor);
   drawingGrid();
-  path.display();
+  path1.display();
+  path2.display();
 
   noStroke();
-  fill('white');
-  textSize(20);
+  fill('black');
+  textSize(25);
   textAlign(CENTER);
-  text("You found green " + ampCount + " times!", width / 2, 100);
+  text("You found green " + ampCount1 + " times!", width / 2, midVal1);
+  text("You found green " + ampCount2 + " times!", width / 2, midVal2);
+
 }

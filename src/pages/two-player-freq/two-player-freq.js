@@ -1,9 +1,9 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let portName1 = "/dev/tty.usbmodem142101";
-let portName2 = "/dev/tty.usbmodem142201";
-let SPEED = 5;
-let SENSITIVITY1 = 15;
-let SENSITIVITY2 = 15;
+let portName1 = "/dev/tty.usbmodem144301";
+let portName2 = "/dev/tty.usbmodem144201";
+let SPEED = 2;
+let SENSITIVITY1 = 5;
+let SENSITIVITY2 = 5;
 let BRUSH_SIZE = 20;
 let GOAL_FREQ = 6;
 let GRID_SIZE = 15;
@@ -403,11 +403,11 @@ function playGame() {
     
       // check if game should end
       if (x1 > width) {
-        // clear();
+        clear();
         frameCount = 0;
         noLoop();
     
-        // endScreen(cycleCount);
+        endScreen(cycleCount1, cycleCount2);
       }
     
       // increment point - angle based
@@ -416,6 +416,9 @@ function playGame() {
 
       y2 = - (ang2 - 90) * SENSITIVITY2 + midVal2; 
       x2 = x2 + SPEED;
+
+      // y1 = map(y1, 0, height, 0, midVal);
+      // y2 = map(y2, 0, height, midVal, height);
     }
   }
 }
@@ -494,7 +497,7 @@ function displayPeriods(periods, player) {
     }
 }
 
-function endScreen() {
+function endScreen(cycleCount1, cycleCount2) {
   background(backgroundColor);
   drawingGrid();
   displayPeriods(periods1, 1);
@@ -502,9 +505,10 @@ function endScreen() {
   path1.display();
   path2.display();
 
-//   noStroke();
-//   fill('white');
-//   textSize(20);
-//   textAlign(CENTER);
-//   text("You found green " + periods.length + " times!", width / 2, 100);
+  noStroke();
+  fill('black');
+  textSize(25);
+  textAlign(CENTER);
+  // text("You found green " + periods1.length + " times!", width / 2, midVal1);
+  // text("You found green " + periods2.length + " times!", width / 2, midVal2);
 }

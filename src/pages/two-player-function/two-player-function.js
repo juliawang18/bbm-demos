@@ -1,8 +1,8 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let portName1 = "/dev/tty.usbmodem142101";
-let portName2 = "/dev/tty.usbmodem142201";
-let SPEED = 10;
-let SENSITIVITY = 10;
+let portName1 = "/dev/tty.usbmodem144301";
+let portName2 = "/dev/tty.usbmodem144201";
+let SPEED = 6;
+let SENSITIVITY = 9;
 let BRUSH_SIZE = 20;
 let TOLERANCE = 40;
 
@@ -41,7 +41,11 @@ let y2;              // ypos of drawing dot
 let midVal2;
 
 // function being matched
-function func(x) {
+function func1(x) {
+  return sin(x);
+}
+
+function func2(x) {
   return sin(x);
 }
 
@@ -151,13 +155,13 @@ function loadPoints() {
 
   for (let i = startPos; i < width; i += SPEED) {
     let xPoint = i;
-    let yPoint = func((i - startPos) / 100) * 100 + midVal1;
+    let yPoint = func1((i - startPos) / 100) * 100 + midVal1;
     funcPoints1[xPoint] = yPoint;
   }
 
   for (let i = startPos; i < width; i += SPEED) {
     let xPoint = i;
-    let yPoint = func((i - startPos) / 100) * 100 + midVal2;
+    let yPoint = func2((i - startPos) / 100) * 100 + midVal2;
     funcPoints2[xPoint] = yPoint;
   }
 
@@ -224,8 +228,8 @@ function gotDataTwo() {
 // <------------- DRAWING FUNCTIONS -------------> //
 function initGame() {
   background(backgroundColor);
-  drawingFunction(midVal1);
-  drawingFunction(midVal2);
+  drawingFunction(midVal1, func1);
+  drawingFunction(midVal2, func2);
 
   // instruction box
   rectMode(CENTER);
@@ -257,8 +261,8 @@ function playGame() {
       } else {
         clear();
         background(backgroundColor);
-        drawingFunction(midVal1);
-        drawingFunction(midVal2);
+        drawingFunction(midVal1, func1);
+        drawingFunction(midVal2, func2);
       }
   
       // add sensor val to path object
@@ -271,7 +275,7 @@ function playGame() {
   
       // check if game should end
       if (x1 > width) {
-        // clear();
+        clear();
         frameCount = 0;
         noLoop();
   
@@ -293,21 +297,24 @@ function playGame() {
         }
   
         if ((sum1 / offsets1.length) * 100 > 60) {
-          winScreen((sum1 / offsets1.length) * 100);
+          winScreen((sum1 / offsets1.length) * 100, 1);
         } else {
-          loseScreen((sum1 / offsets1.length) * 100);
+          loseScreen((sum1 / offsets1.length) * 100, 1);
         }
   
         if ((sum2 / offsets2.length) * 100 > 60) {
-          winScreen((sum2 / offsets2.length) * 100);
+          winScreen((sum2 / offsets2.length) * 100, 2);
         } else {
-          loseScreen((sum2 / offsets2.length) * 100);
+          loseScreen((sum2 / offsets2.length) * 100, 2);
         }
       }
   
       // increment point - angle based
       y1 = - (ang1 - 90) * SENSITIVITY + midVal1; 
       y2 = - (ang2 - 90) * SENSITIVITY + midVal2; 
+
+      // y1 = map(y1, 0, height, 0, midVal);
+      // y2 = map(y2, 0, height, midVal, height);
   
       if (x1 < startPos) {
         x1 = x1 + 2.5;
@@ -316,8 +323,6 @@ function playGame() {
         x1 = x1 + SPEED;
         x2 = x2 + SPEED;
       }
-  
-      print(x1, y1, ang1);
     }
 
 }
@@ -335,7 +340,7 @@ function startGame() {
   frameCount = 0;
 }
 
-function drawingFunction(yVal) {
+function drawingFunction(yVal, func) {
   // set pen
   stroke(0, 0.5);
   strokeWeight(10);
@@ -348,9 +353,9 @@ function drawingFunction(yVal) {
   strokeWeight(10);
 
   // draw line
-  for (let i = 0; i < startPos; i += 20) {
-    point(i, yVal);
-  }
+  // for (let i = 0; i < startPos; i += 20) {
+  //   point(i, yVal);
+  // }
 
   // draw function
   for (let i = startPos; i < width; i += 20) {
@@ -365,8 +370,8 @@ function drawingFunction(yVal) {
 function drawingCount(num) {
   clear();
   background(backgroundColor);
-  drawingFunction(midVal1);
-  drawingFunction(midVal2);
+  drawingFunction(midVal1, func1);
+  drawingFunction(midVal2, func2);
   
   // draw rect
   fill('rgba(0,0,0, 0.4)');
@@ -380,30 +385,58 @@ function drawingCount(num) {
   text(num, startPos / 2, height / 2 - 100);
 }
 
-function winScreen(score) {
-  // background("#07A87C");
-  // drawingFunction(midVal1);
-  // drawingFunction(midVal2);
-  // path.display();
+function winScreen(score, num) {
+  if (num == 1) {
+    fill('#07A87C');
+    rect(0, 0, width, midVal);
+    drawingFunction(midVal1, func1);
+    path1.display();
 
-  // noStroke();
-  // fill('white');
-  // textSize(20);
-  // textAlign(CENTER);
-  // text("WOOO", width / 2, height / 2 - 150);
-  // text("You matched " + round(score) + "% of the points on the function!", width / 2, height / 2 - 100);
+    noStroke();
+    fill('white');
+    textSize(20);
+    textAlign(CENTER);
+    text("You matched " + round(score) + "% of the points on the function!", width / 2, midVal1);
+
+  } else {
+    fill('#07A87C');
+    rect(0, midVal, width, height);
+    drawingFunction(midVal2, func2);
+    path2.display();
+
+    noStroke();
+    fill('white');
+    textSize(20);
+    textAlign(CENTER);
+    text("You matched " + round(score) + "% of the points on the function!", width / 2, midVal2);
+
+  }
 }
 
-function loseScreen(score) {
-  // background("#DA7045");
-  // drawingFunction(midVal1);
-  // drawingFunction(midVal2);
-  // path.display();
+function loseScreen(score, num) {
+  if (num == 1) {
+    fill('#DA7045');
+    rect(0, 0, width, midVal);
+    drawingFunction(midVal1, func1);
+    path1.display();
 
-  // noStroke();
-  // fill('white');
-  // textSize(20);
-  // textAlign(CENTER);
-  // text("TRY AGAIN", width / 2, height / 2 - 150);
-  // text("You matched " + round(score) + "% of the points on the function.", width / 2, height / 2 - 100);
+    noStroke();
+    fill('white');
+    textSize(20);
+    textAlign(CENTER);
+    text("You matched " + round(score) + "% of the points on the function.", width / 2, midVal1);
+
+  } else {
+    fill('#DA7045');
+    rect(0, midVal, width, height);
+    drawingFunction(midVal2, func2);
+    path2.display();
+
+    noStroke();
+    fill('white');
+    textSize(20);
+    textAlign(CENTER);
+    text("You matched " + round(score) + "% of the points on the function.", width / 2, midVal2);
+
+  }
 }

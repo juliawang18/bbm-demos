@@ -1,5 +1,5 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let portName1 = "/dev/tty.usbmodem142101";
+let portName1 = "/dev/tty.usbmodem144301";
 let portName2 = "/dev/tty.usbmodem142201";
 let SPEED = 3;
 let SENSITIVITY1 = 10;
@@ -29,14 +29,12 @@ let midVal;
 let path3;
 
 // player one
-let midVal1;
 let path1;
 let ang1;
 let x1;
 let y1;
 
 // player two
-let midVal2;
 let path2;
 let ang2;
 let x2;
@@ -98,15 +96,13 @@ function setup() {
   midVal = floor((height / gridIncrement) / 2) * gridIncrement;
 
   // player one 
-  midVal1 = midVal - (midVal/2);
   path1 = new Path(BRUSH_SIZE);
-  y1 = midVal1;
+  y1 = midVal;
   x1 = 0;
 
   // player two
-  midVal2 = midVal + (midVal/2);
   path2 = new Path(BRUSH_SIZE);
-  y2 = midVal2;
+  y2 = midVal;
   x2 = 0;
 
   // final path 
@@ -238,129 +234,6 @@ function playGame() {
     }
 
     if (startDraw) {
-      // passes midline
-      if (y1 > midVal1 + BRUSH_SIZE/2) {
-          if (isPositive1) {
-              cycleCount1 += 1;
-              isPositive1 = false;
-              currPeriod1.push(x1);
-              // midTone.play();
-              // toneCount1 = 0;
-          }  
-      }
-
-      if (y2 > midVal2 + BRUSH_SIZE/2) {
-        if (isPositive2) {
-            cycleCount2 += 1;
-            isPositive2 = false;
-            currPeriod2.push(x2);
-            // midTone.play();
-            // toneCount2 = 0;
-        }  
-    }
-
-      // passes midline
-      if (y1 < midVal1 - BRUSH_SIZE/2) {
-          if (!isPositive1) {
-              cycleCount1 += 1;
-              isPositive1 = true;
-              currPeriod1.push(x1);
-              // midTone.play();
-              // toneCount1 = 0;
-          }  
-      }
-
-      if (y2 < midVal2 - BRUSH_SIZE/2) {
-        if (!isPositive2) {
-            cycleCount2 += 1;
-            isPositive2 = true;
-            currPeriod2.push(x2);
-            // midTone.play();
-            // toneCount2 = 0;
-        }  
-    }
-
-      // lower bound
-      if (path1.lastPt()) {
-        // console.log(path.lastPt().y);
-        if (path1.lastPt().y > y1) {
-          if (currState1 == "increasing" && toneCount1 == 0) {
-            lowTone.play();
-            toneCount1 = 1;
-            // console.log("high");
-          }
-          currState1 = "decreasing";
-        }
-    
-        // upper bound
-        if (path1.lastPt().y < y1) {
-          if (currState1 == "decreasing" && toneCount1 == 0) {
-            highTone.play();
-            toneCount1 = 1;
-            // console.log("low");
-          }
-          currState1 = "increasing";
-        }
-
-      }
-
-      if (path2.lastPt()) {
-        // console.log(path.lastPt().y);
-        if (path2.lastPt().y > y2) {
-          if (currState2 == "increasing" && toneCount2 == 0) {
-            // lowTone.play();
-            toneCount2 = 1;
-            // console.log("high");
-          }
-          currState2 = "decreasing";
-        }
-    
-        // upper bound
-        if (path2.lastPt().y < y2) {
-          if (currState2 == "decreasing" && toneCount2 == 0) {
-            // highTone.play();
-            toneCount2 = 1;
-            // console.log("low");
-          }
-          currState2 = "increasing";
-        }
-      }
-
-      if (currPeriod1.length == 3) {
-          let p = sort(currPeriod1, 3);
-          periods1.push(p);
-          currPeriod1 = [];
-          currPeriod1.push(p[2]);
-
-          let w = p[2] - p[0];
-          let dist = abs(goalPeriodLength - w);
-
-          // if (dist > 20) {
-          //   console.log("bad");
-          //   unsuccessTone.play();
-          // } else {
-          //   console.log("good");
-          //   successTone.play();
-          // }
-      }
-
-      if (currPeriod2.length == 3) {
-        let p = sort(currPeriod2, 3);
-        periods2.push(p);
-        currPeriod2 = [];
-        currPeriod2.push(p[2]);
-
-        let w = p[2] - p[0];
-        let dist = abs(goalPeriodLength - w);
-
-        // if (dist > 20) {
-        //   console.log("bad");
-        //   unsuccessTone.play();
-        // } else {
-        //   console.log("good");
-        //   successTone.play();
-        // }
-    }
 
       // add sensor val to path object
       if (ang1 != undefined || ang2 != undefined) {
@@ -380,10 +253,10 @@ function playGame() {
       }
     
       // increment point - angle based
-      y1 = - (ang1 - 90) * SENSITIVITY1 + midVal1; 
+      y1 = - (ang1 - 90) * SENSITIVITY1 + midVal; 
       x1 = x1 + SPEED;
 
-      y2 = - (ang2 - 90) * SENSITIVITY2 + midVal2; 
+      y2 = - (ang2 - 90) * SENSITIVITY2 + midVal; 
       x2 = x2 + SPEED;
     }
   }
@@ -419,12 +292,7 @@ function drawingGrid() {
 
   // draw mid line
   stroke(255, 1);
-  strokeWeight(5);
-  line(0, midVal1, width, midVal1);
-  line(0, midVal2, width, midVal2);
-
-  stroke(0, 1);
-  strokeWeight(10);
+  strokeWeight(8);
   line(0, midVal, width, midVal);
 
   noStroke();
