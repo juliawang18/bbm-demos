@@ -1,7 +1,7 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let portName = "/dev/tty.usbmodem142101";
-let SPEED = 6;
-let SENSITIVITY = 15;
+let portName = "/dev/tty.usbmodem144301";
+let SPEED = 3;
+let SENSITIVITY = 8;
 let BRUSH_SIZE = 20;
 let TOLERANCE = 40;
 
@@ -14,15 +14,6 @@ let latestData = "waiting for data";
 // declare styles
 let backgroundColor; 
 let font; 
-
-// declare sound
-let playerOsc;
-let functionOsc;
-
-// notes
-let highC = 523.251;
-let middleC = 261.63;
-let lowerC = 130.813;
 
 // global vars
 let funcPoints = {};
@@ -37,6 +28,7 @@ let maxFuncVal;
 let minFuncal;
 
 let pointsToSave = [];
+let sound;
 
 // function being matched
 function func(x) {
@@ -47,6 +39,7 @@ function preload() {
   // loaders
   loadColors();
   loadFonts();
+  loadSounds();
 }
 
 function setup() {
@@ -76,15 +69,7 @@ function setup() {
   x = 0;
 
   loadPoints();
-
-  // start sound
-  playerOsc = new p5.SinOsc();
-  playerOsc.start();
-  playerOsc.freq(middleC);
-
-  functionOsc = new p5.SinOsc();
-  playerOsc.start();
-  playerOsc.freq(lowerC);
+  sound.play();
 }
 
 function draw() {
@@ -108,6 +93,12 @@ function loadColors() {
 // load fonts 
 function loadFonts() {
   font = loadFont("../../assets/fonts/Whyte-Medium.otf");
+}
+
+// load sound file
+function loadSounds() {
+  soundFormats('wav', 'ogg');
+  sound = loadSound('Function_Matching_v2_Loop');
 }
 
 // capture correct points 
@@ -163,12 +154,12 @@ function gotData() {
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  // if (incomingAngle > 0) {
-  //   ang = incomingAngle - 90;
-  // } else {
-  //   ang = 270 + incomingAngle;
-  // }
-  ang = incomingAngle + 90;
+  if (incomingAngle > 0) {
+    ang = incomingAngle - 90;
+  } else {
+    ang = 270 + incomingAngle;
+  }
+  // ang = incomingAngle + 90;
 }
 
 // <------------- DRAWING FUNCTIONS -------------> //
@@ -195,12 +186,12 @@ function initGame() {
 }
 
 function playGame() {
-
-    if (frameCount <= 50) {
+  if (frameCount > 100) {
+    if (frameCount <= 160) {
       drawingCount("3");
-    } else if (frameCount > 50 && frameCount <= 100) {
+    } else if (frameCount > 160 && frameCount <= 220) {
       drawingCount("2");
-    } else if (frameCount > 100 && frameCount <= 150) {
+    } else if (frameCount > 220 && frameCount <= 280) {
       drawingCount("1");
     } else {
       clear();
@@ -208,17 +199,17 @@ function playGame() {
       drawingFunction();
     }
 
-    // sound adjustment - function is base tone, haromny only when overlapping
-    let offset = abs(funcPoints[x] - y);
-    let offSetFreq = map(offset, 0, 500, 0, highC - middleC);
-    playerOsc.freq(middleC + offSetFreq);
-    functionOsc.freq(lowerC);
 
+    print(y)
     // add sensor val to path object
     if (ang != undefined) {
       pointsToSave.push([x,y]);
       path.addPoint(x, y);
       path.display();
+      if (path.volume) {
+        print(path.volume);
+        outputVolume(path.volume);
+      }
     }
 
     // check if game should end
@@ -226,10 +217,9 @@ function playGame() {
       clear();
       frameCount = 0;
       noLoop();
-      playerOsc.stop();
-      functionOsc.stop();
+      sound.stop();
 
-      save(pointsToSave, "funcData.txt");
+      // save(pointsToSave, "funcData.txt");
 
       let offsets = path.offsetList();
 
@@ -255,6 +245,7 @@ function playGame() {
     } else {
       x = x + SPEED;
     }
+  }
 
 }
 

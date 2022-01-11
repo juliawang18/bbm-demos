@@ -1,7 +1,7 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let portName = "/dev/tty.usbmodem142101";
-let SPEED = 3;
-let SENSITIVITY = 15;
+let portName = "/dev/tty.usbmodem144301";
+let SPEED = 2;
+let SENSITIVITY = 4;
 let BRUSH_SIZE = 20;
 let GOAL_FREQ = 6;
 let GRID_SIZE = 12;
@@ -17,13 +17,13 @@ let backgroundColor;
 let goalColor;
 let font;
 
-// declare sounds
-let playerOsc;
-
 // notes
-let highC = 523.251;
-let middleC = 261.63;
-let lowerC = 130.813;
+let midTone;
+let highTone;
+let lowTone;
+let toneCount;
+let successTone;
+let unsuccessTone;
 
 // global vars
 let gameScreen;
@@ -40,6 +40,8 @@ let ang;
 let x;
 let y;
 
+let currState;
+
 let currPeriod = [0];
 let periods = [];
 let isPositive;
@@ -53,6 +55,7 @@ function preload() {
   // loaders
   loadColors();
   loadFonts();
+  loadSounds();
 }
 
 function setup() {
@@ -82,10 +85,8 @@ function setup() {
   y = height / 2;
   x = 0;
 
-  // start sound
-  playerOsc = new p5.SinOsc();
-  playerOsc.start();
-  playerOsc.freq(middleC);
+  toneCount = 0;
+
 }
 
 function draw() {
@@ -109,6 +110,15 @@ function loadColors() {
 // load fonts 
 function loadFonts() {
   font = loadFont("../../assets/fonts/Whyte-Medium.otf");
+}
+
+function loadSounds() {
+  soundFormats('wav', 'ogg');
+  midTone = loadSound('sound/Frequency_Matching_v1.a_Wood_Block_Counter-003');
+  highTone = loadSound('sound/Frequency_Matching_v1.a_Wood_Block_Counter-002');
+  lowTone = loadSound('sound/Frequency_Matching_v1.a_Wood_Block_Counter-001');
+  successTone = loadSound('sound/Frequency_Matching_v1.a_Success_Chord');
+  unsuccessTone = loadSound('sound/Frequency_Matching_v1.a_Unsuccessful_Chord');
 }
 
 // <------------- SETUP FUNCTIONS -------------> //
@@ -147,12 +157,12 @@ function gotData() {
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  // if (incomingAngle > 0) {
-  //   ang = incomingAngle - 90;
-  // } else {
-  //   ang = 270 + incomingAngle;
-  // }
-  ang = incomingAngle + 90;
+  if (incomingAngle > 0) {
+    ang = incomingAngle - 90;
+  } else {
+    ang = 270 + incomingAngle;
+  }
+  // ang = incomingAngle + 90;
 }
 
 // <------------- DRAWING FUNCTIONS -------------> //
@@ -180,13 +190,14 @@ function initGame() {
 
 function playGame() {
 
-  if (frameCount <= 50) {
-    drawingCount("3");
-  } else if (frameCount > 50 && frameCount <= 100) {
-    drawingCount("2");
-  } else if (frameCount > 100 && frameCount <= 150) {
-    drawingCount("1");
-  } else {
+  if (frameCount > 100) {
+    if (frameCount <= 160) {
+      drawingCount("3");
+    } else if (frameCount > 160 && frameCount <= 220) {
+      drawingCount("2");
+    } else if (frameCount > 220 && frameCount <= 280) {
+      drawingCount("1");
+    } else {
     clear();
     background(backgroundColor);
     drawingGrid();
@@ -194,20 +205,52 @@ function playGame() {
   }
 
   if (startDraw) {
+    // passes midline
     if (y > midVal + BRUSH_SIZE/2) {
         if (isPositive) {
             cycleCount += 1;
             isPositive = false;
             currPeriod.push(x);
+            midTone.play();
+            // console.log("mid");
+            toneCount = 0;
         }  
     }
 
+    // passes midline
     if (y < midVal - BRUSH_SIZE/2) {
         if (!isPositive) {
             cycleCount += 1;
             isPositive = true;
             currPeriod.push(x);
+            midTone.play();
+            // console.log("mid");
+            toneCount = 0;
         }  
+    }
+
+    // lower bound
+    if (path.lastPt()) {
+      // console.log(path.lastPt().y);
+      if (path.lastPt().y > y) {
+        if (currState == "increasing" && toneCount == 0) {
+          lowTone.play();
+          toneCount = 1;
+          // console.log("high");
+        }
+        currState = "decreasing";
+      }
+  
+      // upper bound
+      if (path.lastPt().y < y) {
+        if (currState == "decreasing" && toneCount == 0) {
+          highTone.play();
+          toneCount = 1;
+          // console.log("low");
+        }
+        currState = "increasing";
+      }
+
     }
 
     if (currPeriod.length == 3) {
@@ -215,12 +258,19 @@ function playGame() {
         periods.push(p);
         currPeriod = [];
         currPeriod.push(p[2]);
+
+        let w = p[2] - p[0];
+        let dist = abs(goalPeriodLength - w);
+
+        if (dist > 20) {
+          console.log("bad");
+          unsuccessTone.play();
+        } else {
+          console.log("good");
+          successTone.play();
+        }
     }
 
-    // sound adjustment - target amps are +/- one octave from middle C (x-axis)
-    let freq = map(y, 0, height, highC, lowerC);
-    playerOsc.freq(freq);
-  
     // add sensor val to path object
     if (ang != undefined) {
         pointsToSave.push([x,y]);
@@ -235,8 +285,7 @@ function playGame() {
       frameCount = 0;
       noLoop();
 
-      save(pointsToSave, "freqData.txt");
-      playerOsc.stop();
+      // save(pointsToSave, "freqData.txt");
   
       endScreen(cycleCount);
     }
@@ -245,6 +294,7 @@ function playGame() {
     y = - (ang - 90) * SENSITIVITY + midVal; 
     x = x + SPEED;
   }
+}
 }
 
 // <------------- HELPER FUNCTIONS FOR DRAWING -------------> //
@@ -301,7 +351,6 @@ function displayPeriods(periods) {
         p = periods[i]
         w = p[2] - p[0];
         dist = abs(goalPeriodLength - w);
-        print(dist);
         fill(115 - dist, 82, 82, 0.5);
         rect((p[0] + p[2])/2, height / 2, w, height);
     }

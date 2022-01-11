@@ -1,5 +1,5 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let portName = "/dev/tty.usbmodem142101";
+let portName = "/dev/tty.usbmodem144301";
 let SPEED = 5;
 let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
@@ -139,12 +139,12 @@ function gotData() {
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  // if (incomingAngle > 0) {
-  //   ang = incomingAngle - 90;
-  // } else {
-  //   ang = 270 + incomingAngle;
-  // }
-  ang = incomingAngle + 90;
+  if (incomingAngle > 0) {
+    ang = incomingAngle - 90;
+  } else {
+    ang = 270 + incomingAngle;
+  }
+  // ang = incomingAngle + 90;
 }
 
 // <------------- DRAWING FUNCTIONS -------------> //
@@ -171,13 +171,14 @@ function initGame() {
 
 function playGame() {
 
-  if (frameCount <= 50) {
-    drawingCount("3");
-  } else if (frameCount > 50 && frameCount <= 100) {
-    drawingCount("2");
-  } else if (frameCount > 100 && frameCount <= 150) {
-    drawingCount("1");
-  } else {
+  if (frameCount > 100) {
+    if (frameCount <= 160) {
+      drawingCount("3");
+    } else if (frameCount > 160 && frameCount <= 220) {
+      drawingCount("2");
+    } else if (frameCount > 220 && frameCount <= 280) {
+      drawingCount("1");
+    } else {
     clear();
     background(backgroundColor);
     drawingGrid();
@@ -209,6 +210,7 @@ function playGame() {
     y = - (ang - 90) * SENSITIVITY + midVal; 
     x = x + SPEED;
   }
+}
 }
 
 // <------------- HELPER FUNCTIONS FOR DRAWING -------------> //

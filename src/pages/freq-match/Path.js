@@ -5,7 +5,7 @@ class Path {
         this.spacing = 1;
     }
   
-    get lastPt() {
+    lastPt() {
         return this.pts[this.pts.length - 1];
     }
   
@@ -16,13 +16,13 @@ class Path {
         }
 
         const nextPt = new p5.Vector(x, y);
-        let d = p5.Vector.dist(nextPt, this.lastPt);
+        let d = p5.Vector.dist(nextPt, this.lastPt());
 
         while (d > this.spacing) {
-            const diff = p5.Vector.sub(nextPt, this.lastPt);
+            const diff = p5.Vector.sub(nextPt, this.lastPt());
             diff.normalize();
             diff.mult(this.spacing)
-            this.pts.push(p5.Vector.add(this.lastPt, diff));
+            this.pts.push(p5.Vector.add(this.lastPt(), diff));
             d -= this.spacing;
         }
     }
