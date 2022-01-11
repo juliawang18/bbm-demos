@@ -1,27 +1,28 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let SPEED = 6;
+let SPEED = 4;
 let SENSITIVITY = 18;
 let BRUSH_SIZE = 20;
 let GOAL_AMP = 2;
-let GRID_SIZE = 12;
+let GRID_SIZE = 11;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
 // serial communication
-let portName;
+let env;
 let serial;
 let latestData = "waiting for data";
 
-// declare styles
+//  styles
 let backgroundColor;
-let darkBackgroundColor;
-let goalColor;
+let darkBackgroundColor; 
+let lineColors;
+let modalColor;
 let gridColor;
 let font;
 
-// global vars
+// global vars 
 let gameScreen;
-let startDraw = false;
+let timer;
 
 let ampCount = 0;
 
@@ -31,16 +32,14 @@ let ampAbove;
 let ampBelow;
 let startPos;
 
-let path;
-
 let ang;
 let x;
-let y
+let ys
 
 function preload() {
-  // loaders
   loadColors();
   loadFonts();
+  loadSounds();
 }
 
 function setup() {
@@ -48,12 +47,12 @@ function setup() {
   createCanvas(window.innerWidth, window.innerHeight);
   textFont(font);
 
-  // Instantiate our SerialPort object
-  portName = new Env().port;
+  // instantiate our serialport object
+  env = new Env();
   serial = new p5.SerialPort();
   serial.list();
   let options = { baudRate: 115200 }; // change the data rate to whatever you wish
-  serial.open(portName, options);
+  serial.open(env.port, options);
   serial.on('connected', serverConnected);
   serial.on('list', gotList);
   serial.on('data', gotData);
@@ -63,56 +62,76 @@ function setup() {
 
   // initialize data
   gameScreen = 0;
+  timer = 3;
+
   gridIncrement = width / GRID_SIZE;
   startPos = gridIncrement * 3;
   midVal = floor((height / gridIncrement) / 2) * gridIncrement;
   ampAbove = midVal - GOAL_AMP * gridIncrement;
   ampBelow = midVal + GOAL_AMP * gridIncrement;
-  path = new Path(BRUSH_SIZE, midVal, ampAbove, ampBelow);
-  y = height / 2;
+
   x = 0;
+  y = midVal;
 }
 
 function draw() {
+  // console.log(frameRate());
   if (gameScreen == 0) {
     initGame();
   } else if (gameScreen == 1) {
     playGame();
-  }
+  } 
 
 }
 
 // <------------- PRELOAD FUNCTIONS -------------> //
-// load colors 
 function loadColors() {
   colorMode(HSB, 360, 100, 100);
-  backgroundColor = color(43, 23, 94);
-  goalColor = color(155, 100, 85);
+  backgroundColor = color(43, 13, 98);
+  darkBackgroundColor = color(43, 23, 94);
+  lineColors = [
+    color(136, 51, 66),
+    color(141, 51, 62),
+    color(146, 52, 58),
+    color(152, 53, 54),
+    color(160, 54, 49),
+    color(167, 55, 45),
+    color(178, 56, 40),
+    color(188, 61, 40),
+    color(197, 68, 39),
+    color(203, 74, 39),
+    color(209, 80, 38)
+  ];
+  modalColor = color(43, 13, 98);
   gridColor = color(209, 80, 38);
-  darkBackgroundColor = color(43, 13, 98);
 }
 
-// load fonts 
 function loadFonts() {
   font = loadFont("../../../assets/fonts/GothamRounded-Bold.otf");
 }
 
+function loadSounds() {
+  // soundFormats('wav', 'ogg');
+  // sound = loadSound('Function_Matching_v2_Loop');
+}
+
+
 // <------------- SETUP FUNCTIONS -------------> //
-// we are connected and ready to go
 function serverConnected() {
+  // we are connected and ready to go
   print("Connected to Server");
 }
 
-// got the list of ports
 function gotList(thelist) {
+  // got the list of ports
   print("List of Serial Ports:");
   for (let i = 0; i < thelist.length; i++) {
     print(i + " " + thelist[i]);
   }
 }
 
-// connected to our serial device
 function gotOpen() {
+  // connected to our serial device
   print("Serial Port is Open");
 }
 
@@ -121,13 +140,13 @@ function gotClose() {
   latestData = "Serial Port is Closed";
 }
 
-// if there is an error, log it
 function gotError(theerror) {
+  // if there is an error, log it
   print(theerror);
 }
 
-// there is data available to work with from the serial port
 function gotData() {
+  // there is data available to work with from the serial port
   let incomingAngle = serial.readStringUntil('\n');
   if (!incomingAngle) return;
   incomingAngle = float(incomingAngle);
@@ -155,7 +174,7 @@ function initGame() {
   noStroke();
   textAlign(CENTER);
   textSize(30);
-  fill(darkBackgroundColor);
+  fill(backgroundColor);
   text("Figure out where green is!", width / 2, height / 4 - 20);
   textSize(20);
   text("(click anywhere to start)", width / 2, height / 4 + 30);
@@ -169,61 +188,68 @@ function playGame() {
     drawGrid();
   }
 
-  
+  // countdown
+  drawingCountdown(timer);
 
+  // decrement timer
+  if (frameCount % 30 == 0 && timer > -1) { 
+    timer--;
+    coverNumber();
+  }
 
-  // if (frameCount % 60 == 0 && timer > 0) { // if the frameCount is divisible by 60, then a second has passed. it will stop at 0
-  //   timer --;
-  // }
-  // if (frameCount > 50) {
-  //   if (frameCount <= 160) {
-  //     drawingCount("3");
-  //   } else if (frameCount > 160 && frameCount <= 220) {
-  //     drawingCount("2");
-  //   } else if (frameCount > 220 && frameCount <= 280) {
-  //     drawingCount("1");
-  //   } else {
-  //     clear();
-  //     background(backgroundColor);
-  //     drawGrid();
-  //   }
+  if (timer == 0) {
+    coverNumber();
+    drawingCountdown("Go!");
+  }
 
-  //   if (y > ampBelow) {
-  //     if (!reachedAmp) {
-  //       ampCount += 1;
-  //       reachedAmp = true;
-  //     }
-  //   }
+  if (timer == -1) {
+    coverNumber();
+  }
 
-  //   if (y < ampBelow && y > ampAbove) {
-  //     reachedAmp = false;
-  //   }
+  if (y > ampBelow) {
+    if (!reachedAmp) {
+      ampCount += 1;
+      reachedAmp = true;
+    }
+  }
 
-  //   if (y < ampAbove) {
-  //     if (!reachedAmp) {
-  //       ampCount += 1;
-  //       reachedAmp = true;
-  //     }
-  //   }
-  //   // add sensor val to path object
-  //   if (ang != undefined) {
-  //     path.addPoint(x, y);
-  //     path.display();
-  //   }
+  if (y < ampBelow && y > ampAbove) {
+    reachedAmp = false;
+  }
 
-  //   // check if game should end
-  //   if (x > width) {
-  //     clear();
-  //     frameCount = 0;
-  //     noLoop();
+  if (y < ampAbove) {
+    if (!reachedAmp) {
+      ampCount += 1;
+      reachedAmp = true;
+    }
+  }
 
-  //     endScreen(ampCount);
-  //   }
+  // adjust color
+  let dist;
+  if (y > midVal) {
+    dist = abs(ampBelow - y);
+  } else {
+    dist = abs(ampAbove - y);
+  }
 
-  //   // increment point - angle based
-  //   y = - (ang - 90) * SENSITIVITY + midVal;
-  //   x = x + SPEED;
-  // }
+  if (dist < 100) { 
+    let index = round(dist/10);
+    fill(lineColors[index]);
+  } else {
+    fill(lineColors[10]);
+  }
+
+  ellipse(x, y, BRUSH_SIZE);
+
+  // end 
+  if (x > width) {
+    noLoop();
+    endScreen();
+  }
+
+  x = x + SPEED;
+  y = lerp(y, - (ang - 90) * SENSITIVITY + midVal, 0.05);
+
 }
 
 // <------------- HELPER FUNCTIONS FOR DRAWING -------------> //
@@ -239,11 +265,25 @@ function startGame() {
   frameCount = 0;
 }
 
+function coverNumber() {
+  fill(darkBackgroundColor);
+  rectMode(CENTER);
+  rect(startPos / 2, height / 2 - 120, 130, 100);
+}
+
+function drawingCountdown(input) {
+  // draw number
+  fill(gridColor);
+  textAlign(CENTER);
+  textSize(70);
+  text(input, startPos / 2, height / 2 - 100);
+}
+
 function drawGrid() {
   // draw rect
   fill(darkBackgroundColor);
   rectMode(CORNER);
-  rect(startPos, 0, width - startPos, height); 
+  rect(0, 0, startPos, height); 
 
   // set pen
   stroke(gridColor);
@@ -260,14 +300,12 @@ function drawGrid() {
     line(0, i, width, i);
   }
 
-  setLineDash([20, 20]);
-  stroke(goalColor);
-  strokeWeight(8);
-  line(0, ampAbove, width, ampAbove);
-  line(0, ampBelow, width, ampBelow);
+  // draw line
+  strokeWeight(3);
+  line(startPos, 0, startPos, height);
 
-  setLineDash([0, 0]);
   // draw mid line
+  setLineDash([0, 0]);
   stroke(gridColor);
   strokeWeight(8);
   line(0, midVal, width, midVal);
@@ -279,31 +317,23 @@ function setLineDash(list) {
   drawingContext.setLineDash(list);
 }
 
-function drawingCount(num) {
-  clear();
-  background(backgroundColor);
-  drawGrid();
-
-  // draw rect
-  fill('rgba(20, 60, 98, 0.2)');
+function endScreen() {
+  // modal
+  noStroke();
+  fill(darkBackgroundColor);
   rectMode(CORNER);
-  rect(startPos, 0, width - startPos, height);
+  rect(0, 0, startPos, height);
 
-  // draw number
+  // score calc
+  let score = 0;
+  
+  // display text
   fill(gridColor);
   textAlign(CENTER);
-  textSize(100);
-  text(num, startPos / 2, height / 2 - 150);
-}
-
-function endScreen(ampCount) {
-  background(backgroundColor);
-  drawGrid();
-  path.display();
-
-  noStroke();
-  fill('white');
   textSize(20);
-  textAlign(CENTER);
-  text("You found green " + ampCount + " times!", width / 2, 100);
+  text("You found green", startPos / 2, height / 3 - 50);
+  textSize(100);
+  text(ampCount, startPos / 2, height / 3 + 70);
+  textSize(20);
+  text("times!", startPos / 2, height / 3 + 140);
 }

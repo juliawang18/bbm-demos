@@ -1,9 +1,10 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let SPEED = 10;
-let SENSITIVITY = 4;
+let SPEED = 5;
+let SENSITIVITY = 8;
 let BRUSH_SIZE = 20;
-let GOAL_FREQ = 6;
 let GRID_SIZE = 12;
+
+let GOAL_FREQ = 6;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
@@ -51,7 +52,6 @@ let seen = false;
 let goalPeriodLength;
 
 let pointsToSave = [];
-let fileCount = 0;
 
 function preload() {
   // loaders
@@ -166,12 +166,12 @@ function gotData() {
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  if (incomingAngle > 0) {
-    ang = incomingAngle - 90;
-  } else {
-    ang = 270 + incomingAngle;
-  }
-  // ang = incomingAngle + 90;
+  // if (incomingAngle > 0) {
+  //   ang = incomingAngle - 90;
+  // } else {
+  //   ang = 270 + incomingAngle;
+  // }
+  ang = incomingAngle + 90;
 }
 
 // <------------- DRAWING FUNCTIONS -------------> //
@@ -258,11 +258,9 @@ function playGame() {
       let w = p[2] - p[0];
       let dist = abs(goalPeriodLength - w);
 
-      if (dist > 20) {
-        console.log("bad");
+      if (dist > 30) {
         unsuccessTone.play();
       } else {
-        console.log("good");
         successTone.play();
       }
     }
@@ -369,47 +367,55 @@ function displayPeriods(periods) {
 
     if (dist > 100) {
       fill(badColor);
-    } else if (dist <= 100 && dist > 50) {
+    } else if (dist <= 100 && dist > 30) {
       fill(okayColor);
     } else {
       fill(greatColor);
     }
     rectMode(CENTER);
     rect((p[0] + p[2]) / 2, height / 2, w, height);
+
+    // line
+    stroke(255, 0.5);
+    strokeWeight(10);
+    line(p[2], 0, p[2], height)
+    noStroke();
   }
 }
 
 function endScreen() {
-  // graphics
   background(backgroundColor);
   drawingPlayArea();
   displayPeriods(periods);
   drawingGrid();
   path.display();
 
-  // draw modal
+  // modal
   noStroke();
-  fill(backgroundColor);
+  fill(darkBackgroundColor);
   rectMode(CORNER);
   rect(0, 0, startPos, height);
 
   // score calc
-  periodCount = 0;
+  let score = 0;
   for (let i = 0; i < periods.length; i++) {
     p = periods[i]
-    if (p[0] > startPos) {
-      periodCount += 1;
+    w = p[2] - p[0];
+    dist = abs(goalPeriodLength - w);
+    console.log(dist, p[0]);
+    if (p[0] > startPos && dist < 30) {
+      score += 1;
     } 
   }
 
-  // score display
+  // display text
   fill(gridColor);
   textAlign(CENTER);
-  textSize(30);
-  text("You got", startPos / 2, height / 2 - 100);
+  textSize(20);
+  text("You got", startPos / 2, height / 3 - 50);
   textSize(100);
-  text(periodCount, startPos / 2, height / 2);
-  textSize(30);
-  text("greens!", startPos / 2, height / 2 + 100);
+  text(score, startPos / 2, height / 3 + 70);
+  textSize(20);
+  text("full greens.", startPos / 2, height / 3 + 140);
 
 }

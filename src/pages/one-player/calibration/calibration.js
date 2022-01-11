@@ -1,37 +1,33 @@
 // <------- CONSTANTS TO CHANGE -------> //
 let SPEED = 5;
-let SENSITIVITY = 15;
+let SENSITIVITY = 18;
 let BRUSH_SIZE = 20;
 let GRID_SIZE = 12;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
 // serial communication
+let env;
 let serial;
-let latestData = "waiting for data";  
+let latestData = "waiting for data";
 
-// declare styles
+//  styles
 let backgroundColor;
 let gridColor;
 let font;
 
-// global vars
+// global vars 
 let gameScreen;
-let startDraw = false;
+let timer;
 
 let gridIncrement;
 let midVal;
-
-let path;
 
 let ang;
 let x;
 let y;
 
-let pointsToSave = [];
-
 function preload() {
-  // loaders
   loadColors();
   loadFonts();
 }
@@ -39,15 +35,14 @@ function preload() {
 function setup() {
   // visual setup
   createCanvas(window.innerWidth, window.innerHeight);
-  background(backgroundColor);
   textFont(font);
 
-  // Instantiate our SerialPort object
-  portName = new Env().port;
+  // instantiate our serialport object
+  env = new Env();
   serial = new p5.SerialPort();
   serial.list();
   let options = { baudRate: 115200 }; // change the data rate to whatever you wish
-  serial.open(portName, options);
+  serial.open(env.port, options);
   serial.on('connected', serverConnected);
   serial.on('list', gotList);
   serial.on('data', gotData);
@@ -57,53 +52,52 @@ function setup() {
 
   // initialize data
   gameScreen = 0;
+  timer = 3;
+
   gridIncrement = width / GRID_SIZE;
   midVal = floor((height / gridIncrement) / 2) * gridIncrement;
-  path = new Path(BRUSH_SIZE);
-  y = height / 2;
+
   x = 0;
+  y = midVal;
 }
 
 function draw() {
-  background(backgroundColor);
-  
+  // console.log(frameRate());
   if (gameScreen == 0) {
     initGame();
   } else if (gameScreen == 1) {
     playGame();
-  }
+  } 
 
 }
 
 // <------------- PRELOAD FUNCTIONS -------------> //
-// load colors 
 function loadColors() {
   colorMode(HSB, 360, 100, 100);
-  backgroundColor = color(209, 80, 38);
+  backgroundColor = color(136, 51, 66);
   gridColor = color(43, 23, 94) ;
 }
 
-// load fonts 
 function loadFonts() {
   font = loadFont("../../../assets/fonts/GothamRounded-Bold.otf");
 }
 
 // <------------- SETUP FUNCTIONS -------------> //
-// we are connected and ready to go
 function serverConnected() {
+  // we are connected and ready to go
   print("Connected to Server");
 }
 
-// got the list of ports
 function gotList(thelist) {
+  // got the list of ports
   print("List of Serial Ports:");
   for (let i = 0; i < thelist.length; i++) {
     print(i + " " + thelist[i]);
   }
 }
 
-// connected to our serial device
 function gotOpen() {
+  // connected to our serial device
   print("Serial Port is Open");
 }
 
@@ -112,30 +106,30 @@ function gotClose() {
   latestData = "Serial Port is Closed";
 }
 
-// if there is an error, log it
 function gotError(theerror) {
+  // if there is an error, log it
   print(theerror);
 }
 
-// there is data available to work with from the serial port
 function gotData() {
-  let incomingAngle = serial.readStringUntil('\n'); 
-  if (!incomingAngle) return;           
+  // there is data available to work with from the serial port
+  let incomingAngle = serial.readStringUntil('\n');
+  if (!incomingAngle) return;
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  if (incomingAngle > 0) {
-    ang = incomingAngle - 90;
-  } else {
-    ang = 270 + incomingAngle;
-  }
-  // ang = incomingAngle + 90;
+  // if (incomingAngle > 0) {
+  //   ang = incomingAngle - 90;
+  // } else {
+  //   ang = 270 + incomingAngle;
+  // }
+  ang = incomingAngle + 90;
 }
 
 // <------------- DRAWING FUNCTIONS -------------> //
 function initGame() {
   background(backgroundColor);
-  drawingGrid();
+  drawGrid();
 
   // instruction box
   rectMode(CENTER);
@@ -147,48 +141,31 @@ function initGame() {
   textAlign(CENTER);
   textSize(30);
   fill(backgroundColor);
-  text("Get used to rocking!", width / 2, height / 4 - 20);
+  text("Get used to rocking on the board!", width / 2, height / 4 - 20);
   textSize(20);
   text("(click anywhere to start)", width / 2, height / 4 + 30);
 }
 
 function playGame() {
-
-  if (frameCount > 100) {
-    if (frameCount <= 160) {
-      drawingCount("3");
-    } else if (frameCount > 160 && frameCount <= 220) {
-      drawingCount("2");
-    } else if (frameCount > 220 && frameCount <= 280) {
-      drawingCount("1");
-    } else {
+  // draw initial background
+  if (frameCount == 1) {
     clear();
     background(backgroundColor);
-    drawingGrid();
-    startDraw = true;
+    drawGrid();
   }
 
-  if (startDraw) {
-    // add sensor val to path object
-    if (ang != undefined) {
-      pointsToSave.push([x,y]);
-      path.addPoint(x, y);
-      path.display();
-    }
-  
-    // check if game should end
-    if (x > width) {
-      frameCount = 0;
-      noLoop();
+  fill(gridColor);
 
-      save(pointsToSave, "calibration.txt");
-    }
-  
-    // increment point - angle based
-    y = - (ang - 90) * SENSITIVITY + midVal; 
-    x = x + SPEED;
+  ellipse(x, y, BRUSH_SIZE);
+
+  // end 
+  if (x > width) {
+    noLoop();
   }
-}
+
+  x = x + SPEED;
+  y = lerp(y, - (ang - 90) * SENSITIVITY + midVal, 0.05);
+
 }
 
 // <------------- HELPER FUNCTIONS FOR DRAWING -------------> //
@@ -204,7 +181,7 @@ function startGame() {
   frameCount = 0;
 }
 
-function drawingGrid() {
+function drawGrid() {
   // set pen
   stroke(gridColor);
   setLineDash([5, 5]);
@@ -220,8 +197,8 @@ function drawingGrid() {
     line(0, i, width, i);
   }
 
-  setLineDash([0, 0]);
   // draw mid line
+  setLineDash([0, 0]);
   stroke(gridColor);
   strokeWeight(8);
   line(0, midVal, width, midVal);
@@ -231,16 +208,4 @@ function drawingGrid() {
 
 function setLineDash(list) {
   drawingContext.setLineDash(list);
-}
-
-function drawingCount(num) {
-  clear();
-  background(backgroundColor);
-  drawingGrid();
-
-  // draw number
-  fill(gridColor);
-  textAlign(CENTER);
-  textSize(100);
-  text(num, width / 2, height / 2 - 100);
 }
