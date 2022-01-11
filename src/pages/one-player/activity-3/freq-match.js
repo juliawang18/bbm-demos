@@ -291,7 +291,6 @@ function playGame() {
   }
 
 }
-}
 
 // <------------- HELPER FUNCTIONS FOR DRAWING -------------> //
 
