@@ -1,43 +1,134 @@
 @font-face {
-    font-family: Whyte;
-    src: local("Whyte-Medium") url(./assets/fonts/Whyte-Medium.otf) format("opentype");
+    font-family: Gotham Rounded;
+    src: local("Gotham-Rounded-Bold") url(./assets/fonts/GothamRounded-Bold.otf) format("opentype");
 }
 
 @font-face {
-    font-family: Inter;
-    src: local("Inter-Medium") url(./assets/fonts/Inter-Medium.ttf) format("truetype");
+    font-family: Gotham Rounded;
+    src: local("Gotham-Rounded-Book") url(./assets/fonts/GothamRounded-Book.otf) format("opentype");
 }
 
-html, body {
+:root {
+    --pink-dark: #F08E6C;
+    --pink-light: #F2A888;
+    --orange-dark: #e8652b;
+    --orange-med: #ED9536;
+    --orange-light: #F2B03D;
+    --yellow-dark: #F2A888;
+    --yellow-light: #FADA4A;
+    --green-dark: #53A96A;
+    --green-light: #89DBAF;
+    --blue-dark: #0A2647;
+    --blue-light: #143C62;
+    --tan: #FAF1DA;
+}
+
+* {
     padding: 0;
     margin: 0;
 }
 
+a {
+    text-decoration: none;
+}
+
 .container-home {
-    background-color: #ffffff;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
 }
 
-.container-two {
-    background-color: #3CA789;
-}
-
-.container-one {
-    background-color: #3CA789;
+.landing-img {
+    height: 120%;
+    width: 110%;
 }
 
 .title-home {
-    font-family: Whyte;
+    font-family: Gotham Rounded;
     font-size: 3em;
-    margin: 4em 0em 1em 0em;
+    font-weight: 500;
+    color: var(--tan);
 }
 
-.thumbnail-group {
-    width: 55%;
+.header {
+    position: absolute;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+}
+
+.button {
+    padding: 0;
+    margin: auto;
+    margin-top: 1em;
+    border-radius: 2em;
+    color: var(--blue-dark);
+    background-color: var(--tan);
+    opacity: 0.7;
+    padding: 0.5em 1em;
+    font-family: Gotham Rounded;
+    font-size: 1.5em;
+    font-weight: 500;
+}
+
+.button:hover {
+    opacity: 1;
+}
+
+/* game selection page */
+.container {
+    background-color: var(--blue-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.inner-container {
+    width: 90%;
+    height: 50%;
+    /* background-color: violet; */
+}
+
+hr {
+    height: 0.4em;
+    border: none;
+    width: 100%;
+    margin: auto;
+    color: var(--tan);
+    background-color: var(--tan);
+}
+
+.tablink {
+    background-color: var(--blue-light);
+    color: var(--tan);
+    margin: 0;
+    border: none;
+    border-radius: 0.5em 0.5em 0em 0em;
+    padding: 1em 2em;
+    font-family: Gotham Rounded;
+    font-size: 1em;
+    font-weight: 500;
+    width: 49.8%;
+}
+
+.tablink:hover {
+    cursor: pointer;
+    background-color: var(--tan);
+    opacity: 0.8;
+    color: var(--blue-light);
+}
+
+.active {
+    background-color: var(--tan);
+    color: var(--blue-light);
+}
+
+.tab {
+    margin-top: 2.5em;
     display: flex;
     justify-content: space-between;
     /* background-color: aqua; */
@@ -67,8 +158,13 @@ html, body {
     width: 22%;
 }
 
+.thumbnail-wrapper {
+    width: 100%;
+}
+
 .thumbnail {
     width: 100%;
+    border-radius: 1em;
 }
 
 .thumbnail:hover {
@@ -88,23 +184,34 @@ html, body {
 
 .back-button {
     position: absolute;
-    text-decoration: none;
-    color: white;
-    background-color: rgba(255, 255, 255, 0.4);
-    width: 1.5em;
-    height: 1.5em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 1em;
-    font-family: Inter;
-    font-size: 2.5em;
-    top: 0.5em;
-    left: 0.5em;
+    top: 0;
+    left: 0;
+    margin: 0;
+    margin: 1em 1em;
 }
 
-.back-button:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+.amp-button {
+    background-color: var(--blue-dark);
+    opacity: 0.8;
+    color: var(--tan);
+}
+
+.func-button {
+    background-color: var(--tan);
+    opacity: 1;
+    color: var(--orange-med);
+}
+
+.calib-button {
+    background-color: var(--tan);
+    opacity: 1;
+    color: var(--green-dark);
+}
+
+.freq-button {
+    background-color: var(--tan);
+    opacity: 1;
+    color: var(--pink-light);
 }
 
 

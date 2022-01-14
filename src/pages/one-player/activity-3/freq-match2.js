@@ -1,49 +1,40 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let portName = "/dev/tty.usbmodem144301";
-let SPEED = 5;
-let SENSITIVITY = 15;
+let SPEED = 30;
+let SENSITIVITY = 18;
 let BRUSH_SIZE = 20;
+let GRID_SIZE = 11;
+
 let GOAL_FREQ = 2;
-let GRID_SIZE = 12;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
 // serial communication
+let env;
 let serial;
-let latestData = "waiting for data";  
+let latestData = "waiting for data";
 
-// declare styles
+//  styles
 let backgroundColor;
-let goalColor;
+let darkBackgroundColor;
+let gridColor;
+let greatColor;
+let okayColor;
+let badColor;
 let font;
 
-// declare sounds
-let playerOsc;
-
-// notes
-let highC = 523.251;
-let middleC = 261.63;
-let lowerC = 130.813;
-
-// global vars
+// global vars 
 let gameScreen;
-let startDraw = false;
-
-let freqCount = 0;
+let startPos;
+let timer;
 
 let gridIncrement;
 let midVal;
-
-let path;
 
 let ang;
 let x;
 let y;
 
-let pointsToSave = [];
-
 function preload() {
-  // loaders
   loadColors();
   loadFonts();
 }
@@ -51,14 +42,14 @@ function preload() {
 function setup() {
   // visual setup
   createCanvas(window.innerWidth, window.innerHeight);
-  background(backgroundColor);
   textFont(font);
 
-  // Instantiate our SerialPort object
+  // instantiate our serialport object
+  env = new Env();
   serial = new p5.SerialPort();
   serial.list();
   let options = { baudRate: 115200 }; // change the data rate to whatever you wish
-  serial.open(portName, options);
+  serial.open(env.port, options);
   serial.on('connected', serverConnected);
   serial.on('list', gotList);
   serial.on('data', gotData);
@@ -68,57 +59,57 @@ function setup() {
 
   // initialize data
   gameScreen = 0;
-  gridIncrement = width / GRID_SIZE;
-  midVal = floor((height / gridIncrement) / 2) * gridIncrement;
-  path = new Path(BRUSH_SIZE);
-  y = height / 2;
-  x = 0;
+  timer = 3;
 
-  // start sound
-  playerOsc = new p5.SinOsc();
-//   playerOsc.start();
-//   playerOsc.freq(middleC);
+  gridIncrement = width / GRID_SIZE;
+  startPos = gridIncrement * 3;
+  midVal = floor((height / gridIncrement) / 2) * gridIncrement;
+
+  x = 0;
+  y = midVal;
 }
 
 function draw() {
-  background(backgroundColor);
-  
+  // console.log(frameRate());
   if (gameScreen == 0) {
     initGame();
   } else if (gameScreen == 1) {
     playGame();
-  }
+  } 
 
 }
 
 // <------------- PRELOAD FUNCTIONS -------------> //
-// load colors 
 function loadColors() {
   colorMode(HSB, 360, 100, 100);
-  backgroundColor = color(0, 0, 20);
+  backgroundColor = color(16, 53, 100);
+  darkBackgroundColor = color(15, 55, 94);
+  gridColor = color(43, 13, 98);
+  greatColor = color(136, 51, 66);
+  okayColor = color(38, 75, 95);
+  badColor = color(18, 81, 91);
 }
 
-// load fonts 
 function loadFonts() {
-  font = loadFont("../../assets/fonts/Whyte-Medium.otf");
+  font = loadFont("../../../assets/fonts/GothamRounded-Bold.otf");
 }
 
 // <------------- SETUP FUNCTIONS -------------> //
-// we are connected and ready to go
 function serverConnected() {
+  // we are connected and ready to go
   print("Connected to Server");
 }
 
-// got the list of ports
 function gotList(thelist) {
+  // got the list of ports
   print("List of Serial Ports:");
   for (let i = 0; i < thelist.length; i++) {
     print(i + " " + thelist[i]);
   }
 }
 
-// connected to our serial device
 function gotOpen() {
+  // connected to our serial device
   print("Serial Port is Open");
 }
 
@@ -127,15 +118,15 @@ function gotClose() {
   latestData = "Serial Port is Closed";
 }
 
-// if there is an error, log it
 function gotError(theerror) {
+  // if there is an error, log it
   print(theerror);
 }
 
-// there is data available to work with from the serial port
 function gotData() {
-  let incomingAngle = serial.readStringUntil('\n'); 
-  if (!incomingAngle) return;           
+  // there is data available to work with from the serial port
+  let incomingAngle = serial.readStringUntil('\n');
+  if (!incomingAngle) return;
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
@@ -150,66 +141,43 @@ function gotData() {
 // <------------- DRAWING FUNCTIONS -------------> //
 function initGame() {
   background(backgroundColor);
-  drawingGrid();
+  drawGrid();
 
   // instruction box
   rectMode(CENTER);
-  fill(255);
-  stroke(0);
-  strokeWeight(5);
-  rect(width / 2, height / 2, width * 0.6, height * 0.4, 10, 10, 10, 10);
-  
+  fill(gridColor);
+  rect(width / 2, height / 4, width * 0.5, height * 0.2, 10, 10, 10, 10);
+
   // text
   noStroke();
   textAlign(CENTER);
   textSize(30);
-  fill(0);
-  text("Get used to rocking!", width / 2, height / 2 - 25);
+  fill(backgroundColor);
+  text("Get used to rocking on the board!", width / 2, height / 4 - 20);
   textSize(20);
-  text("(click anywhere to start)", width / 2, height / 2 + 75);
+  text("(click anywhere to start)", width / 2, height / 4 + 30);
 }
 
 function playGame() {
-
-  if (frameCount > 100) {
-    if (frameCount <= 160) {
-      drawingCount("3");
-    } else if (frameCount > 160 && frameCount <= 220) {
-      drawingCount("2");
-    } else if (frameCount > 220 && frameCount <= 280) {
-      drawingCount("1");
-    } else {
+  // draw initial background
+  if (frameCount == 1) {
     clear();
     background(backgroundColor);
-    drawingGrid();
-    startDraw = true;
+    drawGrid();
   }
 
-  if (startDraw) {
-    // sound adjustment - target amps are +/- one octave from middle C (x-axis)
-    // let freq = map(y, ampAbove, ampBelow, highC, lowerC);
-    // playerOsc.freq(freq);
-  
-    // add sensor val to path object
-    if (ang != undefined) {
-      pointsToSave.push([x,y]);
-      path.addPoint(x, y);
-      path.display();
-    }
-  
-    // check if game should end
-    if (x > width) {
-      frameCount = 0;
-      noLoop();
+  fill(gridColor);
 
-      save(pointsToSave, "calibration.txt");
-    //   playerOsc.stop();
-    }
-  
-    // increment point - angle based
-    y = - (ang - 90) * SENSITIVITY + midVal; 
-    x = x + SPEED;
+  ellipse(x, y, BRUSH_SIZE);
+
+  // end 
+  if (x > width) {
+    noLoop();
   }
+
+  x = x + SPEED;
+  y = lerp(y, - (ang - 90) * SENSITIVITY + midVal, 0.05);
+
 }
 }
 
@@ -226,10 +194,16 @@ function startGame() {
   frameCount = 0;
 }
 
-function drawingGrid() {
+function drawGrid() {
+  // draw rect
+  fill(darkBackgroundColor);
+  rectMode(CORNER);
+  rect(0, 0, startPos, height); 
+
   // set pen
-  stroke(255, 0.4);
-  strokeWeight(3);
+  stroke(gridColor);
+  setLineDash([5, 5]);
+  strokeWeight(1);
 
   // draw vertical grid lines
   for (let i = gridIncrement; i < width; i += gridIncrement) {
@@ -241,22 +215,19 @@ function drawingGrid() {
     line(0, i, width, i);
   }
 
+  // draw line
+  strokeWeight(3);
+  line(startPos, 0, startPos, height);
+
   // draw mid line
-  stroke(255, 1);
-  strokeWeight(5);
+  setLineDash([0, 0]);
+  stroke(gridColor);
+  strokeWeight(8);
   line(0, midVal, width, midVal);
 
   noStroke();
 }
 
-function drawingCount(num) {
-  clear();
-  background(backgroundColor);
-  drawingGrid();
-
-  // draw number
-  fill(255);
-  textAlign(CENTER);
-  textSize(100);
-  text(num, width / 2, height / 2 - 100);
+function setLineDash(list) {
+  drawingContext.setLineDash(list);
 }

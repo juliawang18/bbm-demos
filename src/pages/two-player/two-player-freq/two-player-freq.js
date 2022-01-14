@@ -1,11 +1,11 @@
 // <------- CONSTANTS TO CHANGE -------> //
 let portName1 = "/dev/tty.usbmodem144301";
 let portName2 = "/dev/tty.usbmodem144201";
-let SPEED = 10;
-let SENSITIVITY1 = 10;
-let SENSITIVITY2 = 10;
+let SPEED = 2;
+let SENSITIVITY1 = 5;
+let SENSITIVITY2 = 5;
 let BRUSH_SIZE = 20;
-let GOAL_AMP = 1.5;
+let GOAL_FREQ = 6;
 let GRID_SIZE = 15;
 
 // <------- DO NOT TOUCH BELOW -------> //
@@ -13,12 +13,21 @@ let GRID_SIZE = 15;
 // serial communication
 let serialOne, serialTwo;
 let latestDataOne = "waiting for data";
-let latestDataTwo = "waiting for data"; 
+let latestDataTwo = "waiting for data";  
 
 // declare styles
 let backgroundColor;
 let goalColor;
 let font;
+
+// notes
+let midTone;
+let highTone;
+let lowTone;
+let toneCount1;
+let toneCount2;
+let successTone;
+let unsuccessTone;
 
 // global vars
 let gameScreen;
@@ -27,32 +36,36 @@ let gridIncrement;
 let midVal;
 
 // player one
-let ampCount1 = 0;
-let reachedAmp1;
-let ampAbove1;
-let ampBelow1;
 let midVal1;
+let cycleCount1 = 0;
 let path1;
 let ang1;
 let x1;
 let y1;
+let currState1;
+let currPeriod1 = [0];
+let periods1 = [];
+let isPositive1;
 
 // player two
-let ampCount2 = 0;
-let reachedAmp2;
-let ampAbove2;
-let ampBelow2;
 let midVal2;
+let cycleCount2 = 0;
 let path2;
 let ang2;
 let x2;
 let y2;
+let currState2;
+let currPeriod2 = [0];
+let periods2 = [];
+let isPositive2;
 
+let goalPeriodLength;
 
 function preload() {
   // loaders
   loadColors();
   loadFonts();
+  // loadSounds();
 }
 
 function setup() {
@@ -102,22 +115,22 @@ function setup() {
   gameScreen = 0;
   gridIncrement = width / GRID_SIZE;
   midVal = floor((height / gridIncrement) / 2) * gridIncrement;
+  goalPeriodLength = width / GOAL_FREQ;
 
-  // player one
+  // player one 
   midVal1 = midVal - (midVal/2);
-  ampAbove1 = midVal1 - GOAL_AMP * gridIncrement;
-  ampBelow1 = midVal1 + GOAL_AMP * gridIncrement;
-  path1 = new Path(BRUSH_SIZE, midVal1, ampAbove1, ampBelow1);
+  path1 = new Path(BRUSH_SIZE);
   y1 = midVal1;
   x1 = 0;
 
   // player two
   midVal2 = midVal + (midVal/2);
-  ampAbove2 = midVal2 - GOAL_AMP * gridIncrement;
-  ampBelow2 = midVal2 + GOAL_AMP * gridIncrement;
-  path2 = new Path(BRUSH_SIZE, midVal2, ampAbove2, ampBelow2);
+  path2 = new Path(BRUSH_SIZE);
   y2 = midVal2;
   x2 = 0;
+
+  toneCount = 0;
+
 }
 
 function draw() {
@@ -128,20 +141,28 @@ function draw() {
   } else if (gameScreen == 1) {
     playGame();
   }
-  
+
 }
 
 // <------------- PRELOAD FUNCTIONS -------------> //
 // load colors 
 function loadColors() {
   colorMode(HSB, 360, 100, 100);
-  backgroundColor = color(41, 78, 100);
-  goalColor = color(155, 100, 85);
+  backgroundColor = color(41, 0, 80);
 }
 
 // load fonts 
 function loadFonts() {
-  font = loadFont("../../assets/fonts/Whyte-Medium.otf");
+  font = loadFont("../../../assets/fonts/GothamRounded-Book.otf");
+}
+
+function loadSounds() {
+  soundFormats('wav', 'ogg');
+  midTone = loadSound('sound/Frequency_Matching_v1.a_Wood_Block_Counter-003');
+  highTone = loadSound('sound/Frequency_Matching_v1.a_Wood_Block_Counter-002');
+  lowTone = loadSound('sound/Frequency_Matching_v1.a_Wood_Block_Counter-001');
+  successTone = loadSound('sound/Frequency_Matching_v1.a_Success_Chord');
+  unsuccessTone = loadSound('sound/Frequency_Matching_v1.a_Unsuccessful_Chord');
 }
 
 // <------------- SETUP FUNCTIONS -------------> //
@@ -173,6 +194,7 @@ function gotError(theerror) {
   print(theerror);
 }
 
+// there is data available to work with from the serial port
 function gotDataOne() {
   let incomingAngle = serialOne.readStringUntil('\n'); 
   if (!incomingAngle) return;           
@@ -187,6 +209,8 @@ function gotDataOne() {
   // ang1 = incomingAngle + 90;
 }
 
+
+// there is data available to work with from the serial port
 function gotDataTwo() {
   let incomingAngle = serialTwo.readStringUntil('\n'); 
   if (!incomingAngle) return;           
@@ -200,6 +224,7 @@ function gotDataTwo() {
   // }
   ang2 = incomingAngle + 90;
 }
+
 
 // <------------- DRAWING FUNCTIONS -------------> //
 function initGame() {
@@ -219,7 +244,7 @@ function initGame() {
   textSize(30);
   fill(0);
   text("Instructions:", width / 2, height / 2 - 50);
-  text("Figure out how to draw green the whole time!", width / 2, height / 2);
+  text("Try to make the whole screen green!", width / 2, height / 2);
   textSize(20);
   text("(click anywhere to start)", width / 2, height / 2 + 75);
 }
@@ -241,49 +266,139 @@ function playGame() {
     }
 
     if (startDraw) {
-      if (y1 > ampBelow1) {
-        if (!reachedAmp1) {
-          ampCount1 += 1;
-          reachedAmp1 = true;
+      // passes midline
+      if (y1 > midVal1 + BRUSH_SIZE/2) {
+          if (isPositive1) {
+              cycleCount1 += 1;
+              isPositive1 = false;
+              currPeriod1.push(x1);
+              // midTone.play();
+              // toneCount1 = 0;
+          }  
+      }
+
+      if (y2 > midVal2 + BRUSH_SIZE/2) {
+        if (isPositive2) {
+            cycleCount2 += 1;
+            isPositive2 = false;
+            currPeriod2.push(x2);
+            // midTone.play();
+            // toneCount2 = 0;
+        }  
+    }
+
+      // passes midline
+      if (y1 < midVal1 - BRUSH_SIZE/2) {
+          if (!isPositive1) {
+              cycleCount1 += 1;
+              isPositive1 = true;
+              currPeriod1.push(x1);
+              // midTone.play();
+              // toneCount1 = 0;
+          }  
+      }
+
+      if (y2 < midVal2 - BRUSH_SIZE/2) {
+        if (!isPositive2) {
+            cycleCount2 += 1;
+            isPositive2 = true;
+            currPeriod2.push(x2);
+            // midTone.play();
+            // toneCount2 = 0;
+        }  
+    }
+
+      // lower bound
+      if (path1.lastPt()) {
+        // console.log(path.lastPt().y);
+        if (path1.lastPt().y > y1) {
+          if (currState1 == "increasing" && toneCount1 == 0) {
+            lowTone.play();
+            toneCount1 = 1;
+            // console.log("high");
+          }
+          currState1 = "decreasing";
         }
-      }
     
-      if (y1 < ampBelow1 && y1 > ampAbove1) {
-        reachedAmp1 = false;
+        // upper bound
+        if (path1.lastPt().y < y1) {
+          if (currState1 == "decreasing" && toneCount1 == 0) {
+            highTone.play();
+            toneCount1 = 1;
+            // console.log("low");
+          }
+          currState1 = "increasing";
+        }
+
       }
+
+      if (path2.lastPt()) {
+        // console.log(path.lastPt().y);
+        if (path2.lastPt().y > y2) {
+          if (currState2 == "increasing" && toneCount2 == 0) {
+            // lowTone.play();
+            toneCount2 = 1;
+            // console.log("high");
+          }
+          currState2 = "decreasing";
+        }
     
-      if (y1 < ampAbove1) {
-        if (!reachedAmp1) {
-          ampCount1 += 1;
-          reachedAmp1 = true;
+        // upper bound
+        if (path2.lastPt().y < y2) {
+          if (currState2 == "decreasing" && toneCount2 == 0) {
+            // highTone.play();
+            toneCount2 = 1;
+            // console.log("low");
+          }
+          currState2 = "increasing";
         }
       }
 
-      // player two
-      if (y2 > ampBelow2) {
-        if (!reachedAmp2) {
-          ampCount2 += 1;
-          reachedAmp2 = true;
-        }
+      if (currPeriod1.length == 3) {
+          let p = sort(currPeriod1, 3);
+          periods1.push(p);
+          currPeriod1 = [];
+          currPeriod1.push(p[2]);
+
+          let w = p[2] - p[0];
+          let dist = abs(goalPeriodLength - w);
+
+          // if (dist > 20) {
+          //   console.log("bad");
+          //   unsuccessTone.play();
+          // } else {
+          //   console.log("good");
+          //   successTone.play();
+          // }
       }
-    
-      if (y2 < ampBelow2 && y2 > ampAbove2) {
-        reachedAmp2 = false;
-      }
-    
-      if (y2 < ampAbove2) {
-        if (!reachedAmp2) {
-          ampCount2 += 1;
-          reachedAmp2 = true;
-        }
-      }
-    
+
+      if (currPeriod2.length == 3) {
+        let p = sort(currPeriod2, 3);
+        periods2.push(p);
+        currPeriod2 = [];
+        currPeriod2.push(p[2]);
+
+        let w = p[2] - p[0];
+        let dist = abs(goalPeriodLength - w);
+
+        // if (dist > 20) {
+        //   console.log("bad");
+        //   unsuccessTone.play();
+        // } else {
+        //   console.log("good");
+        //   successTone.play();
+        // }
+    }
+
       // add sensor val to path object
-      if (ang1 != undefined) {
-        path1.addPoint(x1, y1);
-        path2.addPoint(x2, y2);
-        path1.display();
-        path2.display();
+      if (ang1 != undefined || ang2 != undefined) {
+
+          displayPeriods(periods1, 1);
+          displayPeriods(periods2, 2);
+          path1.addPoint(x1, y1);
+          path1.display();
+          path2.addPoint(x2, y2);
+          path2.display();
       }
     
       // check if game should end
@@ -292,7 +407,7 @@ function playGame() {
         frameCount = 0;
         noLoop();
     
-        endScreen(ampCount1, ampCount2);
+        endScreen(cycleCount1, cycleCount2);
       }
     
       // increment point - angle based
@@ -337,24 +452,14 @@ function drawingGrid() {
   }
 
   // draw mid line
-  stroke(0, 1);
-  strokeWeight(10);
-  line(0, midVal, width, midVal);
-
-  // draw mid of players
   stroke(255, 1);
   strokeWeight(5);
   line(0, midVal1, width, midVal1);
   line(0, midVal2, width, midVal2);
 
-  // draw goal amp lines
-  stroke(goalColor);
-  strokeWeight(5);
-  line(0, ampAbove1, width, ampAbove1);
-  line(0, ampBelow1, width, ampBelow1);
-
-  line(0, ampAbove2, width, ampAbove2);
-  line(0, ampBelow2, width, ampBelow2);
+  stroke(0, 1);
+  strokeWeight(10);
+  line(0, midVal, width, midVal);
 
   noStroke();
 }
@@ -371,9 +476,32 @@ function drawingCount(num) {
   text(num, width / 2, height / 2 - 100);
 }
 
-function endScreen(ampCount1, ampCount2) {
+function displayPeriods(periods, player) {
+    colorMode(HSB);
+    if (player == 1) {
+      for (let i = 0; i < periods.length; i++) {
+        p = periods[i];
+        w = p[2] - p[0];
+        dist = abs(goalPeriodLength - w);
+        fill(115 - dist, 82, 82, 0.5);
+        rect((p[0] + p[2])/2, midVal / 2, w, midVal);
+      }
+    } else {
+      for (let i = 0; i < periods.length; i++) {
+        p = periods[i]
+        w = p[2] - p[0];
+        dist = abs(goalPeriodLength - w);
+        fill(115 - dist, 82, 82, 0.5);
+        rect((p[0] + p[2])/2, (height+midVal)/2, w, height-midVal);
+      }
+    }
+}
+
+function endScreen(cycleCount1, cycleCount2) {
   background(backgroundColor);
   drawingGrid();
+  displayPeriods(periods1, 1);
+  displayPeriods(periods2, 2);
   path1.display();
   path2.display();
 
@@ -381,7 +509,6 @@ function endScreen(ampCount1, ampCount2) {
   fill('black');
   textSize(25);
   textAlign(CENTER);
-  text("You found green " + ampCount1 + " times!", width / 2, midVal1);
-  text("You found green " + ampCount2 + " times!", width / 2, midVal2);
-
+  // text("You found green " + periods1.length + " times!", width / 2, midVal1);
+  // text("You found green " + periods2.length + " times!", width / 2, midVal2);
 }

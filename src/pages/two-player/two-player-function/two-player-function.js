@@ -138,7 +138,7 @@ function loadColors() {
 
 // load fonts 
 function loadFonts() {
-  font = loadFont("../../assets/fonts/Whyte-Medium.otf");
+  font = loadFont("../../../assets/fonts/GothamRounded-Book.otf");
 }
 
 // capture correct points 

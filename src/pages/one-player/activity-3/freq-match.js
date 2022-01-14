@@ -1,20 +1,25 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let portName = "/dev/tty.usbmodem144301";
-let SPEED = 2;
-let SENSITIVITY = 4;
+let SPEED = 5;
+let SENSITIVITY = 8;
 let BRUSH_SIZE = 20;
-let GOAL_FREQ = 6;
 let GRID_SIZE = 12;
+
+let GOAL_FREQ = 6;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
 // serial communication
+let portName;
 let serial;
-let latestData = "waiting for data";  
+let latestData = "waiting for data";
 
 // declare styles
 let backgroundColor;
-let goalColor;
+let darkBackgroundColor;
+let greatColor;
+let okayColor;
+let badColor;
+let gridColor;
 let font;
 
 // notes
@@ -27,9 +32,7 @@ let unsuccessTone;
 
 // global vars
 let gameScreen;
-let startDraw = false;
-
-let cycleCount = 0;
+let startPos;
 
 let gridIncrement;
 let midVal;
@@ -49,7 +52,6 @@ let seen = false;
 let goalPeriodLength;
 
 let pointsToSave = [];
-let fileCount = 0;
 
 function preload() {
   // loaders
@@ -65,6 +67,7 @@ function setup() {
   textFont(font);
 
   // Instantiate our SerialPort object
+  portName = new Env().port;
   serial = new p5.SerialPort();
   serial.list();
   let options = { baudRate: 115200 }; // change the data rate to whatever you wish
@@ -79,6 +82,7 @@ function setup() {
   // initialize data
   gameScreen = 0;
   gridIncrement = width / GRID_SIZE;
+  startPos = gridIncrement * 3;
   midVal = floor((height / gridIncrement) / 2) * gridIncrement;
   goalPeriodLength = width / GOAL_FREQ;
   path = new Path(BRUSH_SIZE);
@@ -91,7 +95,7 @@ function setup() {
 
 function draw() {
   background(backgroundColor);
-  
+
   if (gameScreen == 0) {
     initGame();
   } else if (gameScreen == 1) {
@@ -104,12 +108,17 @@ function draw() {
 // load colors 
 function loadColors() {
   colorMode(HSB, 360, 100, 100);
-  backgroundColor = color(41, 0, 80);
+  backgroundColor = color(15, 55, 94);
+  darkBackgroundColor = color(16, 53, 100);
+  gridColor = color(43, 13, 98);
+  greatColor = color(136, 51, 66);
+  okayColor = color(38, 75, 95);
+  badColor = color(18, 81, 91);
 }
 
 // load fonts 
 function loadFonts() {
-  font = loadFont("../../assets/fonts/Whyte-Medium.otf");
+  font = loadFont("../../../assets/fonts/GothamRounded-Bold.otf");
 }
 
 function loadSounds() {
@@ -152,40 +161,38 @@ function gotError(theerror) {
 
 // there is data available to work with from the serial port
 function gotData() {
-  let incomingAngle = serial.readStringUntil('\n'); 
-  if (!incomingAngle) return;           
+  let incomingAngle = serial.readStringUntil('\n');
+  if (!incomingAngle) return;
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  if (incomingAngle > 0) {
-    ang = incomingAngle - 90;
-  } else {
-    ang = 270 + incomingAngle;
-  }
-  // ang = incomingAngle + 90;
+  // if (incomingAngle > 0) {
+  //   ang = incomingAngle - 90;
+  // } else {
+  //   ang = 270 + incomingAngle;
+  // }
+  ang = incomingAngle + 90;
 }
 
 // <------------- DRAWING FUNCTIONS -------------> //
 function initGame() {
   background(backgroundColor);
+  drawingPlayArea();
   drawingGrid();
 
   // instruction box
   rectMode(CENTER);
-  fill(255);
-  stroke(0);
-  strokeWeight(5);
-  rect(width / 2, height / 2, width * 0.6, height * 0.4, 10, 10, 10, 10);
-  
+  fill(gridColor);
+  rect(width / 2, height / 4, width * 0.5, height * 0.2, 10, 10, 10, 10);
+
   // text
   noStroke();
   textAlign(CENTER);
   textSize(30);
-  fill(0);
-  text("Instructions:", width / 2, height / 2 - 50);
-  text("Try to make the whole screen green!", width / 2, height / 2);
+  fill(backgroundColor);
+  text("Try to make the whole screen green!", width / 2, height / 4 - 20);
   textSize(20);
-  text("(click anywhere to start)", width / 2, height / 2 + 75);
+  text("(click anywhere to start)", width / 2, height / 4 + 30);
 }
 
 function playGame() {
@@ -198,87 +205,75 @@ function playGame() {
     } else if (frameCount > 220 && frameCount <= 280) {
       drawingCount("1");
     } else {
-    clear();
-    background(backgroundColor);
-    drawingGrid();
-    startDraw = true;
-  }
-
-  if (startDraw) {
+      clear();
+      background(backgroundColor);
+      drawingPlayArea();
+    }
     // passes midline
-    if (y > midVal + BRUSH_SIZE/2) {
-        if (isPositive) {
-            cycleCount += 1;
-            isPositive = false;
-            currPeriod.push(x);
-            midTone.play();
-            // console.log("mid");
-            toneCount = 0;
-        }  
+    if (y > midVal + BRUSH_SIZE / 2) {
+      if (isPositive) {
+        isPositive = false;
+        currPeriod.push(x);
+        midTone.play();
+        toneCount = 0;
+      }
     }
 
     // passes midline
-    if (y < midVal - BRUSH_SIZE/2) {
-        if (!isPositive) {
-            cycleCount += 1;
-            isPositive = true;
-            currPeriod.push(x);
-            midTone.play();
-            // console.log("mid");
-            toneCount = 0;
-        }  
+    if (y < midVal - BRUSH_SIZE / 2) {
+      if (!isPositive) {
+        isPositive = true;
+        currPeriod.push(x);
+        midTone.play();
+        toneCount = 0;
+      }
     }
 
     // lower bound
     if (path.lastPt()) {
-      // console.log(path.lastPt().y);
       if (path.lastPt().y > y) {
         if (currState == "increasing" && toneCount == 0) {
           lowTone.play();
           toneCount = 1;
-          // console.log("high");
         }
         currState = "decreasing";
       }
-  
+
       // upper bound
       if (path.lastPt().y < y) {
         if (currState == "decreasing" && toneCount == 0) {
           highTone.play();
           toneCount = 1;
-          // console.log("low");
         }
         currState = "increasing";
       }
-
     }
 
     if (currPeriod.length == 3) {
-        p = sort(currPeriod, 3);
-        periods.push(p);
-        currPeriod = [];
-        currPeriod.push(p[2]);
+      p = sort(currPeriod, 3);
+      periods.push(p);
+      currPeriod = [];
+      currPeriod.push(p[2]);
 
-        let w = p[2] - p[0];
-        let dist = abs(goalPeriodLength - w);
+      let w = p[2] - p[0];
+      let dist = abs(goalPeriodLength - w);
 
-        if (dist > 20) {
-          console.log("bad");
-          unsuccessTone.play();
-        } else {
-          console.log("good");
-          successTone.play();
-        }
+      if (dist > 30) {
+        unsuccessTone.play();
+      } else {
+        successTone.play();
+      }
     }
 
     // add sensor val to path object
     if (ang != undefined) {
-        pointsToSave.push([x,y]);
-        displayPeriods(periods);
-        path.addPoint(x, y);
-        path.display();
+      pointsToSave.push([x, y]);
+      displayPeriods(periods);
+      path.addPoint(x, y);
+      path.display();
     }
-  
+
+    drawingGrid();
     // check if game should end
     if (x > width) {
       clear();
@@ -286,15 +281,15 @@ function playGame() {
       noLoop();
 
       // save(pointsToSave, "freqData.txt");
-  
-      endScreen(cycleCount);
+
+      endScreen();
     }
-  
+
     // increment point - angle based
-    y = - (ang - 90) * SENSITIVITY + midVal; 
+    y = - (ang - 90) * SENSITIVITY + midVal;
     x = x + SPEED;
   }
-}
+
 }
 
 // <------------- HELPER FUNCTIONS FOR DRAWING -------------> //
@@ -312,8 +307,9 @@ function startGame() {
 
 function drawingGrid() {
   // set pen
-  stroke(255, 0.5);
-  strokeWeight(3);
+  stroke(gridColor);
+  setLineDash([5, 5]);
+  strokeWeight(1);
 
   // draw vertical grid lines
   for (let i = gridIncrement; i < width; i += gridIncrement) {
@@ -325,46 +321,101 @@ function drawingGrid() {
     line(0, i, width, i);
   }
 
+  setLineDash([0, 0]);
   // draw mid line
-  stroke(255, 1);
-  strokeWeight(5);
+  stroke(gridColor);
+  strokeWeight(8);
   line(0, midVal, width, midVal);
 
   noStroke();
 }
 
+function drawingPlayArea() {
+  // draw rect
+  noStroke();
+  fill(darkBackgroundColor);
+  rectMode(CORNER);
+  rect(startPos, 0, width - startPos, height);
+}
+
+function setLineDash(list) {
+  drawingContext.setLineDash(list);
+}
+
 function drawingCount(num) {
   clear();
   background(backgroundColor);
-  drawingGrid();
+
+  // draw rect
+  noStroke();
+  fill('rgba(255,255,255, 0.2)');
+  rectMode(CORNER);
+  rect(startPos, 0, width - startPos, height);
 
   // draw number
-  fill(0);
+  fill(gridColor);
   textAlign(CENTER);
   textSize(100);
-  text(num, width / 2, height / 2 - 100);
+  text(num, startPos / 2, height / 2 - 150);
 }
 
 function displayPeriods(periods) {
-    colorMode(HSB);
-    for (let i = 0; i < periods.length; i++) {
-        p = periods[i]
-        w = p[2] - p[0];
-        dist = abs(goalPeriodLength - w);
-        fill(115 - dist, 82, 82, 0.5);
-        rect((p[0] + p[2])/2, height / 2, w, height);
+  for (let i = 0; i < periods.length; i++) {
+    p = periods[i]
+    w = p[2] - p[0];
+    dist = abs(goalPeriodLength - w);
+
+    if (dist > 100) {
+      fill(badColor);
+    } else if (dist <= 100 && dist > 30) {
+      fill(okayColor);
+    } else {
+      fill(greatColor);
     }
+    rectMode(CENTER);
+    rect((p[0] + p[2]) / 2, height / 2, w, height);
+
+    // line
+    stroke(255, 0.5);
+    strokeWeight(10);
+    line(p[2], 0, p[2], height)
+    noStroke();
+  }
 }
 
 function endScreen() {
   background(backgroundColor);
-  drawingGrid();
+  drawingPlayArea();
   displayPeriods(periods);
+  drawingGrid();
   path.display();
 
-//   noStroke();
-//   fill('white');
-//   textSize(20);
-//   textAlign(CENTER);
-//   text("You found green " + periods.length + " times!", width / 2, 100);
+  // modal
+  noStroke();
+  fill(darkBackgroundColor);
+  rectMode(CORNER);
+  rect(0, 0, startPos, height);
+
+  // score calc
+  let score = 0;
+  for (let i = 0; i < periods.length; i++) {
+    p = periods[i]
+    w = p[2] - p[0];
+    dist = abs(goalPeriodLength - w);
+    console.log(dist, p[0]);
+    if (p[0] > startPos && dist < 30) {
+      score += 1;
+    } 
+  }
+
+  // display text
+  fill(gridColor);
+  textAlign(CENTER);
+  textSize(20);
+  text("You got", startPos / 2, height / 3 - 50);
+  textSize(100);
+  text(score, startPos / 2, height / 3 + 70);
+  textSize(20);
+  text("full greens.", startPos / 2, height / 3 + 140);
+
 }
