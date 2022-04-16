@@ -20,7 +20,11 @@
     --green-light: #89DBAF;
     --blue-dark: #0A2647;
     --blue-light: #143C62;
+    --purple: #805DC0;
     --tan: #FAF1DA;
+    --white: #FFFFFF;
+    --gray-light: #E5E5E5;
+    --gray-dark:#808080;
 }
 
 * {
@@ -140,22 +144,8 @@ hr {
     justify-content: space-evenly;
 }
 
-.thumbnail-group-two {
-    width: 45%;
-    display: flex;
-    justify-content: space-evenly;
-}
-
-.thumbnail-container-home {
-    width: 40%;
-}
-
-.thumbnail-container-two {
-    width: 30%;
-}
-
 .thumbnail-container {
-    width: 22%;
+    width: 18%;
 }
 
 .thumbnail-wrapper {
@@ -212,6 +202,12 @@ hr {
     background-color: var(--tan);
     opacity: 1;
     color: var(--pink-light);
+}
+
+.func-add-button {
+    background-color: var(--white);
+    opacity: 0.8;
+    color: var(--gray-dark);
 }
 
 
