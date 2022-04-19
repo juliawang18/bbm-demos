@@ -297,7 +297,7 @@ function drawFunction() {
     //   stroke(255, 1);
     // }
     let xPoint = i;
-    let yPoint = func((i - startPos) / 100) * 100 + (height / 2);
+    let yPoint = func((i - startPos) / 100) * 100 + midVal;
     point(xPoint, yPoint);
   }
 

@@ -2,7 +2,7 @@
 let SPEED = 2;
 let SENSITIVITY = 14;
 let BRUSH_SIZE = 20;
-let GRID_SIZE = 12;
+let GRID_SIZE = 8;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
@@ -39,11 +39,6 @@ let y1;
 let ang2;
 let x2;
 let y2;
-
-// goal function
-function func(x) {
-  return 0;
-}
 
 function preload() {
   loadColors();
@@ -87,7 +82,7 @@ function setup() {
   gameScreen = 0;
   timer = 3;
 
-  gridIncrement = width / GRID_SIZE;
+  gridIncrement = height / GRID_SIZE;
   startPos = gridIncrement * 3;
   midVal = floor((height / gridIncrement) / 2) * gridIncrement;
 
@@ -99,7 +94,6 @@ function setup() {
   y2 = midVal;
   ang2 = 90;
 
-  loadCorrectPoints();
   // sound.play();
 }
 
@@ -109,7 +103,6 @@ function draw() {
   } else if (gameScreen == 1) {
     playGame();
   } 
-
 }
 
 // <------------- PRELOAD FUNCTIONS -------------> //
@@ -130,14 +123,6 @@ function loadFonts() {
 function loadSounds() {
   soundFormats('wav', 'ogg');
   sound = loadSound('Function_Matching_v2_Loop');
-}
-
-function loadCorrectPoints() {
-  for (let i = 0; i < width; i += SPEED) {
-    let xPoint = i;
-    let yPoint = func((i - startPos) / 100) * 100 + (height / 2);
-    correctPoints[xPoint] = yPoint;
-  }
 }
 
 // <------------- SETUP FUNCTIONS -------------> //
@@ -196,7 +181,11 @@ function gotData2() {
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  curAng = incomingAngle + 90;
+  if (incomingAngle > 0) {
+    curAng = incomingAngle - 90;
+  } else {
+    curAng = 270 + incomingAngle;
+  }
 
   if (ang2) {
     if (abs(curAng - ang2) < 100) {
@@ -218,7 +207,7 @@ function initGame() {
   // text
   noStroke();
   textAlign(CENTER);
-  textSize(30);
+  textSize(25);
   fill(backgroundColor);
   text("What you draw together will create a line!", width / 2, height / 4 - 20);
   textSize(20);
@@ -260,19 +249,19 @@ function playGame() {
   fill(playerTwoColor);
   ellipse(x2, y2, BRUSH_SIZE);
 
-  newY = map(y1, 0, height, -midVal, midVal)
   // sum point
+  newY = map(y1, 0, height, -midVal, midVal)
   fill(sumColor);
-  ellipse(x2, y2 + newY + 40, BRUSH_SIZE);
+  ellipse(x2, y2 + newY, BRUSH_SIZE);
 
   // // adjust sound
-  let dist = abs(correctPoints[x1] - (y2 + newY + 40));
+  // let dist = abs(correctPoints[x1] - (y2 + newY + 50));
 
-  if (dist < 100) { 
-    outputVolume(1 - dist/100);
-  } else {
-    outputVolume(0);
-  }
+  // if (dist < 100) { 
+  //   outputVolume(1 - dist/100);
+  // } else {
+  //   outputVolume(0);
+  // }
 
   // end 
   if (x1 > width) {
@@ -283,15 +272,11 @@ function playGame() {
   x1 = x1 + SPEED;
   if (ang1) {
     y1 = lerp(y1, - (ang1 - 90) * SENSITIVITY + midVal, 0.05);
-    // rad1 = (ang1 / 180) * PI; // slope mapping
-    // y1 = y1 + SPEED * cos(rad1) / sin(rad1) * SENSITIVITY;
   }
 
   x2 = x2 + SPEED;
   if (ang2) {
     y2 = lerp(y2, - (ang2 - 90) * SENSITIVITY + midVal, 0.05);
-    // rad2 = (ang2 / 180) * PI; // slope mapping
-    // y2 = y2 + SPEED * cos(rad2) / sin(rad2) * SENSITIVITY;
   }
 
 }
@@ -312,7 +297,7 @@ function startGame() {
 function coverNumber() {
   fill(darkBackgroundColor);
   rectMode(CENTER);
-  rect(startPos / 2, height / 2 - 320, 130, 100);
+  rect(startPos / 2, height / 2 - gridIncrement * 2.5, 130, 100);
 }
 
 function drawingCountdown(input) {
@@ -320,7 +305,7 @@ function drawingCountdown(input) {
   fill(gridColor);
   textAlign(CENTER);
   textSize(70);
-  text(input, startPos / 2, height / 2 - 300);
+  text(input, startPos / 2, height / 2 - gridIncrement * 2.5);
 }
 
 function drawGrid() {

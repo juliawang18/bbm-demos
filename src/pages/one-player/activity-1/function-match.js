@@ -3,6 +3,11 @@ let SPEED = 5;
 let SENSITIVITY = 50;
 let BRUSH_SIZE = 20;
 
+// function being matched
+function func(x) {
+  return sin(x);
+}
+
 // <------- DO NOT TOUCH BELOW -------> //
 
 // serial communication
@@ -33,11 +38,6 @@ let y
 let path;
 
 let sound;
-
-// function being matched
-function func(x) {
-  return sin(x);
-}
 
 function preload() {
   loadColors();
@@ -120,7 +120,7 @@ function loadSounds() {
 function loadCorrectPoints() {
   for (let i = 0; i < width; i += SPEED) {
     let xPoint = i;
-    let yPoint = func((i - startPos) / 100) * 100 + (height / 2);
+    let yPoint = func((i - startPos) / 100) * 100 + midVal;
     correctPoints[xPoint] = yPoint;
   }
 }
