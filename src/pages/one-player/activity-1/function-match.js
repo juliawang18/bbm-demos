@@ -1,9 +1,12 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let SPEED = 3;
-let SENSITIVITY = 10;
+let SPEED = 5;
+let SENSITIVITY = 50;
 let BRUSH_SIZE = 20;
-let GOAL_AMP = 2;
-let GRID_SIZE = 12;
+
+// function being matched
+function func(x) {
+  return sin(x);
+}
 
 // <------- DO NOT TOUCH BELOW -------> //
 
@@ -32,12 +35,9 @@ let ang;
 let x;
 let y
 
-let sound;
+let path;
 
-// function being matched
-function func(x) {
-  return sin(x);
-}
+let sound;
 
 function preload() {
   loadColors();
@@ -55,7 +55,7 @@ function setup() {
   serial = new p5.SerialPort();
   serial.list();
   let options = { baudRate: 115200 }; // change the data rate to whatever you wish
-  serial.open(env.port, options);
+  serial.open(env.player1, options);
   serial.on('connected', serverConnected);
   serial.on('list', gotList);
   serial.on('data', gotData);
@@ -73,18 +73,18 @@ function setup() {
   x = 0;
   y = height / 2;
 
+  path = [];
+
   loadCorrectPoints();
   sound.play();
 }
 
 function draw() {
-  // console.log(frameRate());
   if (gameScreen == 0) {
     initGame();
   } else if (gameScreen == 1) {
     playGame();
   } 
-
 }
 
 // <------------- PRELOAD FUNCTIONS -------------> //
@@ -120,7 +120,7 @@ function loadSounds() {
 function loadCorrectPoints() {
   for (let i = 0; i < width; i += SPEED) {
     let xPoint = i;
-    let yPoint = func((i - startPos) / 100) * 100 + (height / 2);
+    let yPoint = func((i - startPos) / 100) * 100 + midVal;
     correctPoints[xPoint] = yPoint;
   }
 }
@@ -162,12 +162,13 @@ function gotData() {
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  // if (incomingAngle > 0) {
-  //   ang = incomingAngle - 90;
-  // } else {
-  //   ang = 270 + incomingAngle;
-  // }
-  ang = incomingAngle + 90;
+  if (incomingAngle > 0) {
+    ang = incomingAngle - 90;
+  } else if (incomingAngle == 0) {
+    ang = 0;
+  } else {
+    ang = 270 + incomingAngle;
+  }
 }
 
 // <------------- DRAWING FUNCTIONS -------------> //
@@ -183,9 +184,9 @@ function initGame() {
   // text
   noStroke();
   textAlign(CENTER);
-  textSize(30);
+  textSize(25);
   fill(backgroundColor);
-  text("Figure out how to draw blue the whole time!", width / 2, height / 4 - 20);
+  text("Figure out how to draw green the whole time!", width / 2, height / 4 - 20);
   textSize(20);
   text("(click anywhere to start)", width / 2, height / 4 + 30);
 }
@@ -220,9 +221,9 @@ function playGame() {
   let dist = abs(correctPoints[x] - y);
 
   if (dist < 100) { 
-    let index = 10 - round(dist/10);
+    let index = round(dist/10);
     if (x >= startPos) {
-      if (index > 5) {
+      if (index < 5) {
         tally.push(1);
       } else {
         tally.push(0);
@@ -231,7 +232,7 @@ function playGame() {
     fill(lineColors[index]);
     outputVolume(1 - dist/100);
   } else {
-    fill(lineColors[0]);
+    fill(lineColors[9]);
     outputVolume(0);
     tally.push(0);
   }
@@ -243,12 +244,15 @@ function playGame() {
     sound.stop();
     noLoop();
     endScreen();
+    save(path, "funcData.txt");
   }
 
   x = x + SPEED;
   if (ang) {
     y = lerp(y, - (ang - 90) * SENSITIVITY + midVal, 0.05);
   }
+
+  path.push([x, y]);
 
 }
 
@@ -331,5 +335,5 @@ function endScreen() {
   textSize(100);
   text(score + "%", startPos / 2, height / 3 + 70);
   textSize(20);
-  text("points of the function.", startPos / 2, height / 3 + 140);
+  text("green!", startPos / 2, height / 3 + 140);
 }

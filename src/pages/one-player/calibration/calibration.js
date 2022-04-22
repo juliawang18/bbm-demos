@@ -1,8 +1,9 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let SPEED = 5;
-let SENSITIVITY = 18;
+let PLAYER = 1; // change to player you aare calibrating for
+let SPEED = 2;
+let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
-let GRID_SIZE = 12;
+let GRID_SIZE = 13;
 
 // <------- DO NOT TOUCH BELOW -------> //
 
@@ -27,6 +28,8 @@ let ang;
 let x;
 let y;
 
+let path;
+
 function preload() {
   loadColors();
   loadFonts();
@@ -42,7 +45,11 @@ function setup() {
   serial = new p5.SerialPort();
   serial.list();
   let options = { baudRate: 115200 }; // change the data rate to whatever you wish
-  serial.open(env.port, options);
+  if (PLAYER == 1) {
+    serial.open(env.player1, options);
+  } else {
+    serial.open(env.player2, options);
+  }
   serial.on('connected', serverConnected);
   serial.on('list', gotList);
   serial.on('data', gotData);
@@ -59,6 +66,8 @@ function setup() {
 
   x = 0;
   y = midVal;
+
+  path = [];
 }
 
 function draw() {
@@ -118,12 +127,14 @@ function gotData() {
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  // if (incomingAngle > 0) {
-  //   ang = incomingAngle - 90;
-  // } else {
-  //   ang = 270 + incomingAngle;
-  // }
-  ang = incomingAngle + 90;
+  if (incomingAngle > 0) {
+    ang = incomingAngle - 90;
+  } else if (incomingAngle == 0) {
+    ang = 0;
+  } else {
+    ang = 270 + incomingAngle;
+  }
+
 }
 
 // <------------- DRAWING FUNCTIONS -------------> //
@@ -155,16 +166,24 @@ function playGame() {
   }
 
   fill(gridColor);
-
   ellipse(x, y, BRUSH_SIZE);
 
   // end 
   if (x > width) {
     noLoop();
+    if (PLAYER == 1) {
+      save(path, "calibDataP1.txt");
+    } else {
+      save(path, "calibDataP2.txt");
+    }
   }
 
   x = x + SPEED;
-  y = lerp(y, - (ang - 90) * SENSITIVITY + midVal, 0.05);
+  if (ang) {
+    y = lerp(y, - (ang - 90) * SENSITIVITY + midVal, 0.05);
+  }
+
+  path.push([x, y]);
 
 }
 
