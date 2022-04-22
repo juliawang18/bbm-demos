@@ -35,10 +35,12 @@ let midVal;
 let ang1;
 let x1;
 let y1;
+let path1 = [];
 
 let ang2;
 let x2;
 let y2;
+let path2 = [];
 
 function preload() {
   loadColors();
@@ -267,7 +269,12 @@ function playGame() {
   if (x1 > width) {
     // sound.stop();
     noLoop();
+    save(path1, "funcAddDataP1.txt");
+    save(path2, "funcAddDataP2.txt");
   }
+
+  path1.push([x1,  y1]);
+  path2.push([x2,  y2]);
 
   x1 = x1 + SPEED;
   if (ang1) {

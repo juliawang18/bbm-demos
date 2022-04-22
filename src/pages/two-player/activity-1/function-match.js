@@ -1,8 +1,8 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let SENSITIVITY_P1 = 9;
-let SENSITIVITY_P2 = 9;
+let SENSITIVITY_P1 = 10;
+let SENSITIVITY_P2 = 13;
 
-let SPEED = 4;
+let SPEED = 3;
 let BRUSH_SIZE = 20;
 
 // player1 function
@@ -12,7 +12,7 @@ function func1(x) {
 
 // player2 function
 function func2(x) {
-  return cos(x);
+  return sin(x);
 }
 
 // <------- DO NOT TOUCH BELOW -------> //
@@ -253,8 +253,8 @@ function playGame() {
   if (P1.x > width) {
     noLoop();
     endScreen();
-    // save(P1.path, "funcDataP1.txt");
-    // save(P2.path, "funcDataP2.txt");
+    save(P1.path, "funcDataP1.txt");
+    save(P2.path, "funcDataP2.txt");
   }
 
   incrementPosition(P1);

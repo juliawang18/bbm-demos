@@ -1,5 +1,6 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let SPEED = 8;
+let PLAYER = 1; // change to player you aare calibrating for
+let SPEED = 2;
 let SENSITIVITY = 15;
 let BRUSH_SIZE = 20;
 let GRID_SIZE = 13;
@@ -44,7 +45,11 @@ function setup() {
   serial = new p5.SerialPort();
   serial.list();
   let options = { baudRate: 115200 }; // change the data rate to whatever you wish
-  serial.open(env.player1, options);
+  if (PLAYER == 1) {
+    serial.open(env.player1, options);
+  } else {
+    serial.open(env.player2, options);
+  }
   serial.on('connected', serverConnected);
   serial.on('list', gotList);
   serial.on('data', gotData);
@@ -166,7 +171,11 @@ function playGame() {
   // end 
   if (x > width) {
     noLoop();
-    save(path, "calibData.txt");
+    if (PLAYER == 1) {
+      save(path, "calibDataP1.txt");
+    } else {
+      save(path, "calibDataP2.txt");
+    }
   }
 
   x = x + SPEED;

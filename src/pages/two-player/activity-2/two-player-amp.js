@@ -1,11 +1,11 @@
 // <------- CONSTANTS TO CHANGE -------> //
 let SENSITIVITY_P1 = 10;
-let SENSITIVITY_P2 = 10;
+let SENSITIVITY_P2 = 13;
 
 let GOAL_AMP_P1 = 2;
 let GOAL_AMP_P2 = 2;
 
-let SPEED = 4;
+let SPEED = 2;
 let BRUSH_SIZE = 20;
 let GRID_SIZE = 16; // height
 
@@ -236,8 +236,8 @@ function playGame() {
   if (P1.x > width) {
     noLoop();
     endScreen();
-    // save(P1.path, "ampDataP1.txt");
-    // save(P2.path, "ampDataP2.txt");
+    save(P1.path, "ampDataP1.txt");
+    save(P2.path, "ampDataP2.txt");
   }
 
   incrementPosition(P1);
