@@ -212,10 +212,10 @@ function initGame() {
   // text
   noStroke();
   textAlign(CENTER);
-  textSize(25);
+  textSize(width  * 0.018);
   fill(backgroundColor);
   text("Figure out how to draw green the whole time!", width / 2, height / 4 - 20);
-  textSize(20);
+  textSize(width  * 0.01);
   text("(click anywhere to start)", width / 2, height / 4 + 30);
 }
 

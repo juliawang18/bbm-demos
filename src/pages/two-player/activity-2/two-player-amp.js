@@ -192,10 +192,10 @@ function initGame() {
   // text
   noStroke();
   textAlign(CENTER);
-  textSize(25);
+  textSize(width  * 0.018);
   fill(backgroundColor);
   text("Find as many green stars as possible!", width / 2, height / 4 - 20);
-  textSize(20);
+  textSize(width  * 0.018);
   text("(click anywhere to start)", width / 2, height / 4 + 30);
 }
 

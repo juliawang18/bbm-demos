@@ -203,10 +203,10 @@ function initGame() {
   // text
   noStroke();
   textAlign(CENTER);
-  textSize(30);
+  textSize(width  * 0.018);
   fill(backgroundColor);
   text("What you draw together will create a shape!", width / 2, height / 4 - 20);
-  textSize(20);
+  textSize(width  * 0.01);
   text("(click anywhere to start)", width / 2, height / 4 + 30);
 }
 

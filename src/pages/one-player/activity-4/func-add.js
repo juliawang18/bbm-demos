@@ -92,9 +92,9 @@ function loadColors() {
   backgroundColor = color(0, 0, 100);
   darkBackgroundColor = color(0, 0, 95);
   gridColor = color(0, 0, 50);
-  playerOneColor = color(37, 56, 100);
-  playerTwoColor = color(177, 93, 56);
-  sumColor = color(93, 77, 70);
+  playerOneColor = color(26, 66, 93);
+  playerTwoColor = color(206, 93, 89);
+  sumColor = color(0, 0, 0);
 }
 
 function loadFonts() {
@@ -173,10 +173,10 @@ function initGame() {
   // text
   noStroke();
   textAlign(CENTER);
-  textSize(30);
+  textSize(width  * 0.018);
   fill(backgroundColor);
   text("What you draw together will create a line!", width / 2, height / 4 - 20);
-  textSize(20);
+  textSize(width  * 0.01);
   text("(click anywhere to start)", width / 2, height / 4 + 30);
 }
 

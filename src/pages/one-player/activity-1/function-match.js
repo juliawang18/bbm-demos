@@ -1,5 +1,5 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let SPEED = 5;
+let SPEED = 10;
 let SENSITIVITY = 50;
 let BRUSH_SIZE = 20;
 
@@ -184,10 +184,10 @@ function initGame() {
   // text
   noStroke();
   textAlign(CENTER);
-  textSize(25);
+  textSize(width  * 0.018);
   fill(backgroundColor);
   text("Figure out how to draw green the whole time!", width / 2, height / 4 - 20);
-  textSize(20);
+  textSize(width  * 0.01);
   text("(click anywhere to start)", width / 2, height / 4 + 30);
 }
 
@@ -283,7 +283,7 @@ function drawingCountdown(input) {
   // draw number
   fill(modalColor);
   textAlign(CENTER);
-  textSize(100);
+  textSize(width * 0.05);
   text(input, startPos / 2, height / 2 - 150);
 }
 
@@ -304,7 +304,8 @@ function drawFunction() {
       stroke(255, 1);
     }
     let xPoint = i;
-    let yPoint = func((i - startPos) / 100) * 100 + (height / 2);
+    // let yPoint = func((i - startPos) / 100) * 100 + (height / 2);
+    let yPoint = func(xPoint/ (height / 10)) * (height / 10) + midVal;
     point(xPoint, yPoint);
   }
 
@@ -330,10 +331,10 @@ function endScreen() {
   // display text
   fill(modalColor);
   textAlign(CENTER);
-  textSize(20);
+  textSize(width  * 0.015);
   text("You got", startPos / 2, height / 3 - 50);
-  textSize(100);
+  textSize(width  * 0.06);
   text(score + "%", startPos / 2, height / 3 + 70);
-  textSize(20);
+  textSize(width  * 0.015);
   text("green!", startPos / 2, height / 3 + 140);
 }
