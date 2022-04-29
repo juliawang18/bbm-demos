@@ -293,11 +293,8 @@ function drawFunction() {
 
   // draw function
   for (let i = 0; i < width; i += 30) {
-    // if (i > startPos) {
-    //   stroke(255, 1);
-    // }
     let xPoint = i;
-    let yPoint = func((i - startPos) / 100) * 100 + midVal;
+    let yPoint = func(xPoint/ (height / 10)) * (height / 10) + midVal;
     point(xPoint, yPoint);
   }
 

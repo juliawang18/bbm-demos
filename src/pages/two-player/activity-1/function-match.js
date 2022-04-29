@@ -310,7 +310,7 @@ function drawFunctions() {
       stroke(255, 1);
     }
     let xPoint = i;
-    let yPoint = func1((i - startPos) / 100) * 100 + P1.midVal;
+    let yPoint = func1(xPoint/ (height / 10)) * (height / 10) + P1.midVal;
     point(xPoint, yPoint);
   }
 
@@ -323,7 +323,7 @@ function drawFunctions() {
       stroke(255, 1);
     }
     let xPoint = j;
-    let yPoint = func2((j - startPos) / 100) * 100 + P2.midVal;
+    let yPoint = func2(xPoint/ (height / 10)) * (height / 10) + P2.midVal;
     point(xPoint, yPoint);
   }
 
