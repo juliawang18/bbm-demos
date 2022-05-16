@@ -1,6 +1,6 @@
 // <------- CONSTANTS TO CHANGE -------> //
-let SPEED = 10;
-let SENSITIVITY = 50;
+let SPEED = 3;
+let SENSITIVITY = 10;
 let BRUSH_SIZE = 20;
 
 // function being matched
@@ -120,7 +120,7 @@ function loadSounds() {
 function loadCorrectPoints() {
   for (let i = 0; i < width; i += SPEED) {
     let xPoint = i;
-    let yPoint = func((i - startPos) / 100) * 100 + midVal;
+    let yPoint = func(xPoint/ (height / 10)) * (height / 10) + midVal;;
     correctPoints[xPoint] = yPoint;
   }
 }

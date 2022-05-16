@@ -181,7 +181,11 @@ function gotData2() {
   incomingAngle = float(incomingAngle);
 
   // altering incoming angle val to fit interaction
-  curAng = incomingAngle + 90;
+  if (incomingAngle > 0) {
+    curAng = incomingAngle - 90;
+  } else {
+    curAng = 270 + incomingAngle;
+  }
 
   if (ang2) {
     if (abs(curAng - ang2) < 100) {
